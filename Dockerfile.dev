@@ -18,3 +18,5 @@ CMD ["npm", "run", "dev"]
 # WARNINGS: 
 # - Do not use prisma generate or migrate functions in dockerfile as it will not work during build time
 # - Do not copy your node_modules folder in production
+# - Do not expose your db port in production
+# - Do use docker-compose for production!
