@@ -1,0 +1,11 @@
+# Libs
+node_modules
+*/**/node_modules
+dist
+*/**/dist
+
+# env
+.env
+
+# misc
+.DS_Store

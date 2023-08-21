@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URI")
+}
+
+// ---------------------------------------------------------
+// ---------------------- USER TABLES ----------------------
+// ---------------------------------------------------------
+model User {
+  id         Int       @id @default(autoincrement())
+  username   String    @unique
+  email      String    @unique
+  password   String
+  avatar_url String?
+  revoked    Boolean   @default(false)
+  role       Int       @default(0)
+  created_at DateTime  @default(now())
+  updated_at DateTime?
+
+  // Relationship with refresh tokens
+  refreshTokens     UserRefreshTokenCache[]
+  UserConnectionLog UserConnectionLog[]
+}
+
+model UserRefreshTokenCache {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  token      String    @unique
+  ip         String
+  user_agent String
+  revoked    Boolean   @default(true)
+  created_at DateTime  @default(now())
+  updated_at DateTime?
+  expires_at DateTime
+
+  // Relationship with user
+  user User @relation(fields: [user_id], references: [id])
+}
+
+model UserConnectionLog {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  ip         String
+  user_agent String
+  created_at DateTime @default(now())
+
+  // Relationship with user
+  user User @relation(fields: [user_id], references: [id])
+}
+
+// -------------------------------------------------------------
+// ---------------------- CUSTOMER TABLES ----------------------
+// -------------------------------------------------------------
+model Customer {
+  id         Int       @id @default(autoincrement())
+  name       String
+  email      String
+  password   String
+  avatar_url String?
+  revoked    Boolean   @default(false)
+  created_at DateTime  @default(now())
+  updated_at DateTime?
+
+  // Relationship with refresh tokens
+  refreshTokens         CustomerRefreshTokenCache[]
+  CustomerConnectionLog CustomerConnectionLog[]
+}
+
+model CustomerRefreshTokenCache {
+  id          Int       @id @default(autoincrement())
+  customer_id Int
+  token       String    @unique
+  ip          String
+  user_agent  String
+  revoked     Boolean   @default(true)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime?
+  expires_at  DateTime
+
+  // Relationship with customer
+  customer Customer @relation(fields: [customer_id], references: [id])
+}
+
+model CustomerConnectionLog {
+  id          Int      @id @default(autoincrement())
+  customer_id Int
+  ip          String
+  user_agent  String
+  created_at  DateTime @default(now())
+
+  // Relationship with customer
+  customer Customer @relation(fields: [customer_id], references: [id])
+}

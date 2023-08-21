@@ -1,0 +1,59 @@
+{
+    "include": [
+        "./src",
+        "./test"
+    ],
+    "exclude": [
+        "dist",
+        "node_modules"
+    ],
+    "compilerOptions": {
+        "types": [
+            "@types/jest",
+            "node"
+        ],
+        "moduleResolution": "node",
+        "target": "ES6",
+        "module": "commonjs",
+        "lib": [
+            "ES6",
+            "esnext.asynciterable"
+        ],
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "allowSyntheticDefaultImports": true,
+        "noImplicitAny": true,
+        "removeComments": true,
+        "esModuleInterop": true,
+        "incremental": true,
+        "sourceMap": true,
+        "baseUrl": ".",
+        "outDir": "dist",
+        "plugins": [
+            {
+                "name": "typescript-sql-tagged-template-plugin",
+                "enableDiagnostics": false,
+                "enableFormat": true
+            }
+        ],
+        "paths": {
+            "@config": [
+                "src/config"
+            ],
+            "@controllers": [
+                "src/controllers"
+            ],
+            "@plugins": [
+                "src/plugins"
+            ],
+            "@types": [
+                "src/types"
+            ],
+        }
+    },
+    "ts-node": {
+        "require": [
+            "tsconfig-paths/register"
+        ]
+    }
+}

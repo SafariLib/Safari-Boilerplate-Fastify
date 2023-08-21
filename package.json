@@ -1,0 +1,48 @@
+{
+    "name": "@safari-lib/fastify-boilerplate",
+    "author": "BenoitSafari",
+    "description": "Fastify boilerplate using, Fastify, Postgres and Docker",
+    "version": "0.1.0",
+    "readme": "README.md",
+    "scripts": {
+        "dev": "nodemon -q --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts --onSuccess \"node --inspect=0.0.0.0:9229 dist/index.js\"",
+        "build": "tsc",
+        "start": "node ./dist/index.js",
+        "test": "jest --verbose",
+        "test:watch": "jest --watchAll --verbose",
+        "clean-install": "rimraf node_modules && npm install",
+        "docker:build:dev": "docker build --pull --rm -f \"Dockerfile.dev\" -t fastify_dev \".\"",
+        "docker:run:db": "docker run -d -e POSTGRES_USER=postgres_user -e POSTGRES_PASSWORD=postgres_password -e POSTGRES_DB=postgres_db -v database:/var/lib/postgresql/data --name pg_dev postgres:latest",
+        "docker:run:dev": "docker run -d -p 8080:8080 -p 9229:9229 --name fastify_dev --link pg_dev:pg_dev -v ./:/app fastify_dev"
+    },
+    "dependencies": {
+        "@fastify/cookie": "latest",
+        "@fastify/rate-limit": "latest",
+        "@prisma/client": "latest",
+        "bcryptjs": "latest",
+        "fastify": "latest",
+        "fastify-plugin": "latest",
+        "jsonwebtoken": "latest",
+        "qs": "latest"
+    },
+    "devDependencies": {
+        "@types/bcryptjs": "latest",
+        "@types/jest": "latest",
+        "@types/jsonwebtoken": "latest",
+        "@types/node": "latest",
+        "@types/qs": "latest",
+        "@typescript-eslint/eslint-plugin": "latest",
+        "@typescript-eslint/parser": "latest",
+        "eslint": "latest",
+        "eslint-config-prettier": "latest",
+        "eslint-plugin-prefer-arrow": "latest",
+        "jest": "latest",
+        "nodemon": "latest",
+        "prettier": "latest",
+        "prisma": "latest",
+        "ts-jest": "latest",
+        "ts-node": "latest",
+        "tsconfig-paths": "latest",
+        "typescript": "latest"
+    }
+}

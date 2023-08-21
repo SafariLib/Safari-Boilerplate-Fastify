@@ -1,0 +1,20 @@
+FROM node:lts-slim
+
+# Set environment variables
+ENV NODE_ENV="development"
+ENV SERVER_PORT="8080"
+ENV POSTGRES_URI="postgresql://postgres_user:postgres_password@pg_dev:5432/postgres_db"
+ENV SECRET_COOKIE="cookie_secret"
+ENV SECRET_JWT="jwt_secret"
+
+# Install openssl and curl (needed for prisma migrate)
+RUN apt update && apt install -y openssl && apt install -y curl
+
+WORKDIR /app
+COPY . .
+
+CMD ["npm", "run", "dev"]
+
+# WARNINGS: 
+# - Do not use prisma generate or migrate functions in dockerfile as it will not work during build time
+# - Do not copy your node_modules folder in production
