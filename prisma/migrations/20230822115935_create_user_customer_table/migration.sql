@@ -1,9 +1,9 @@
 -- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
-    "username" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "password" TEXT NOT NULL,
+    "username" VARCHAR(32) NOT NULL,
+    "email" VARCHAR(64) NOT NULL,
+    "password" VARCHAR(64) NOT NULL,
     "avatar_url" TEXT,
     "revoked" BOOLEAN NOT NULL DEFAULT false,
     "role" INTEGER NOT NULL DEFAULT 0,
@@ -42,11 +42,12 @@ CREATE TABLE "UserConnectionLog" (
 -- CreateTable
 CREATE TABLE "Customer" (
     "id" SERIAL NOT NULL,
-    "name" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "password" TEXT NOT NULL,
+    "username" VARCHAR(32) NOT NULL,
+    "email" VARCHAR(64) NOT NULL,
+    "password" VARCHAR(64) NOT NULL,
     "avatar_url" TEXT,
     "revoked" BOOLEAN NOT NULL DEFAULT false,
+    "role" INTEGER NOT NULL DEFAULT 0,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3),
 
@@ -87,6 +88,12 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "UserRefreshTokenCache_token_key" ON "UserRefreshTokenCache"("token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Customer_username_key" ON "Customer"("username");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Customer_email_key" ON "Customer"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "CustomerRefreshTokenCache_token_key" ON "CustomerRefreshTokenCache"("token");

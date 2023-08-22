@@ -1,15 +1,17 @@
 import type { FastifyInstance, FastifyReply as Reply, FastifyRequest as Request } from 'fastify';
+import { loginSchema } from './schemas';
 import type { LoginPayload } from './types';
 
 export default async (fastify: FastifyInstance) => {
     fastify.route({
         method: 'POST',
-        url: '/auth/login-user',
-        // TODO: create schema schema => fastify.getSchema('/login'),
+        url: '/auth/login/:entity',
+        schema: loginSchema,
         handler: async (request: Request<LoginPayload>, reply: Reply) => {
             const { verifyCredentials, logUserConnection } = fastify.authService;
             const { signAccessToken, signRefreshToken, cookieOpts } = fastify.jsonWebToken;
             const { headers, ip } = request;
+            const { entity } = request.params;
             const { password, username } = request.body;
 
             if (!username) return reply.code(400).send({ message: 'USER_NO_USERNAME_PROVIDED' });
@@ -19,10 +21,10 @@ export default async (fastify: FastifyInstance) => {
             const userAgent = headers['user-agent'];
 
             try {
-                const { user, tokenContent } = await verifyCredentials({ username, password }, 'user');
+                const { user, tokenContent } = await verifyCredentials({ username, password }, entity);
                 const accessToken = signAccessToken(tokenContent);
                 const refreshToken = signRefreshToken(tokenContent);
-                await logUserConnection(user.id, ip, userAgent);
+                await logUserConnection(user.id, ip, userAgent, entity);
 
                 reply
                     .code(200)

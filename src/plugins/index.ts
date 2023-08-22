@@ -1,7 +1,5 @@
-export { default as bcrypt } from './modules/bcrypt';
-export { default as fastifyCookie } from './modules/fastifyCookie';
-export { default as fastifyRateLimit } from './modules/fastifyRateLimit';
-export { default as jsonWebToken } from './modules/jsonWebToken';
-export { default as prisma } from './modules/prisma';
-
-export { default as authService } from './services/authService';
+export { default as bcrypt } from './bcrypt/plugin';
+export { default as fastifyCookie } from './fastifyCookie/plugin';
+export { default as fastifyRateLimit } from './fastifyRateLimit/plugin';
+export { default as jsonWebToken } from './jsonWebToken/plugin';
+export { default as prisma } from './prisma/plugin';

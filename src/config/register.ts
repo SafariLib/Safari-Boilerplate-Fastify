@@ -1,5 +1,6 @@
 import { authController } from '@controllers';
-import { authService, bcrypt, fastifyCookie, fastifyRateLimit, jsonWebToken, prisma } from '@plugins';
+import { bcrypt, fastifyCookie, fastifyRateLimit, jsonWebToken, prisma } from '@plugins';
+import { authService } from '@services';
 import type { FastifyInstance } from 'fastify';
 
 /**
@@ -9,6 +10,10 @@ import type { FastifyInstance } from 'fastify';
  * - Controllers
  *
  * Order matters. Be careful when changing the order/adding new plugins.
+ * Loads the plugins in the following order:
+ * - Plugins (DB Connector should come first)
+ * - Services
+ * - Controllers
  */
 export const registerPlugins = async (fastify: FastifyInstance) => {
     console.log('> Registering plugins...');

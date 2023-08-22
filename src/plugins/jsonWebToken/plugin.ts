@@ -1,22 +1,9 @@
 import { CookieSerializeOptions } from '@fastify/cookie';
-import type { Token, TokenContent } from '@types';
+import type { Token } from '@types';
 import type { FastifyPluginCallback } from 'fastify';
 import plugin from 'fastify-plugin';
 import jsonwebtoken, { Algorithm, SignOptions, VerifyOptions } from 'jsonwebtoken';
-
-type TokenState = 'INVALID' | 'EXPIRED' | 'VALID';
-
-interface JsonWebToken {
-    signAccessToken: (payload: TokenContent) => string;
-    signRefreshToken: (payload: TokenContent) => string;
-    verifyAccessToken: (token: string) => { token: Token; state: TokenState };
-    verifyRefreshToken: (token: string) => { token: Token; state: TokenState };
-    cookieOpts: CookieSerializeOptions;
-    tokens: {
-        access: Token | null;
-        refresh: Token | null;
-    };
-}
+import { JsonWebToken, SignAccessToken, SignRefreshToken, TokenState } from './types';
 
 declare module 'fastify' {
     interface FastifyInstance {
@@ -63,11 +50,11 @@ export default plugin((async (fastify, opts, done) => {
         refresh: null as Token | null,
     };
 
-    const signAccessToken = (payload: TokenContent) => {
+    const signAccessToken: SignAccessToken = payload => {
         return jsonwebtoken.sign(payload, process.env.SECRET_JWT, jwtSignOpts);
     };
 
-    const signRefreshToken = (payload: TokenContent) => {
+    const signRefreshToken: SignRefreshToken = payload => {
         return jsonwebtoken.sign(payload, process.env.SECRET_JWT, jwtRefreshSignOpts);
     };
 

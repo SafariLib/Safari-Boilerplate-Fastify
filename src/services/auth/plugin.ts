@@ -1,17 +1,7 @@
 import { Customer, User } from '@prisma/client';
-import { TokenContent } from '@types';
 import type { FastifyPluginCallback } from 'fastify';
 import plugin from 'fastify-plugin';
-
-type VerifyCredentials = (
-    payload: { username: string; password: string },
-    table: 'user' | 'customer',
-) => Promise<{
-    tokenContent: TokenContent;
-    user: Omit<User, 'password'> | Omit<Customer, 'password'>;
-}>;
-
-type LogUserConnection = (user_id: number, ip: string, user_agent: string) => Promise<void>;
+import { LogUserConnection, VerifyCredentials } from './types';
 
 declare module 'fastify' {
     interface FastifyInstance {
@@ -25,11 +15,11 @@ declare module 'fastify' {
 export default plugin((async (fastify, opts, done) => {
     if (fastify.hasDecorator('authService')) return fastify.log.warn('authService already registered');
 
-    const verifyCredentials: VerifyCredentials = async ({ username, password }, table) => {
+    const verifyCredentials: VerifyCredentials = async ({ username, password }, entity) => {
         const { prisma, bcrypt } = fastify;
 
         const [user] = await prisma.$queryRaw<Customer[] | User[]>`
-            SELECT * FROM ${table} WHERE username = ${username}
+            SELECT * FROM ${entity} WHERE username = ${username}
         `;
 
         if (!user) {
@@ -54,16 +44,28 @@ export default plugin((async (fastify, opts, done) => {
         };
     };
 
-    const logUserConnection: LogUserConnection = async (user_id: number, ip: string, user_agent: string) => {
+    const logUserConnection: LogUserConnection = async (user_id, ip, user_agent, entity) => {
         const { prisma } = fastify;
 
-        await prisma.userConnectionLog.create({
-            data: {
-                ip,
-                user_agent,
-                user_id,
-            },
-        });
+        if (entity === 'user') {
+            await prisma.userConnectionLog.create({
+                data: {
+                    ip,
+                    user_agent,
+                    user_id,
+                },
+            });
+        } else if (entity === 'customer') {
+            await prisma.customerConnectionLog.create({
+                data: {
+                    ip,
+                    user_agent,
+                    customer_id: user_id,
+                },
+            });
+        } else {
+            throw new Error('USER_INVALID_ENTITY');
+        }
     };
 
     fastify.decorate('authService', {

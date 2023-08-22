@@ -46,8 +46,14 @@
             "@plugins": [
                 "src/plugins"
             ],
+            "@services": [
+                "src/services"
+            ],
             "@types": [
                 "src/types"
+            ],
+            "@schemas": [
+                "src/schemas"
             ],
         }
     },

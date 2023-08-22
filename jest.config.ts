@@ -10,6 +10,8 @@ export default {
         '^@config$': '<rootDir>/src/config',
         '^@controllers$': '<rootDir>/src/controllers',
         '^@plugins$': '<rootDir>/src/plugins',
+        '^@services$': '<rootDir>/src/services',
         '^@types$': '<rootDir>/src/types',
+        '^@schemas$': '<rootDir>/src/schemas',
     },
 };
