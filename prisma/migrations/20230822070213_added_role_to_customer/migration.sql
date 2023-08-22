@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Customer" ADD COLUMN     "role" INTEGER NOT NULL DEFAULT 0;
