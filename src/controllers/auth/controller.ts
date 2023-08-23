@@ -13,12 +13,11 @@ export default async (fastify: FastifyInstance) => {
             const { headers, ip } = request;
             const { entity } = request.params;
             const { password, username } = request.body;
+            const userAgent = headers['user-agent'];
 
             if (!username) return reply.code(400).send({ message: 'USER_NO_USERNAME_PROVIDED' });
             if (!password) return reply.code(400).send({ message: 'USER_NO_PASSWORD_PROVIDED' });
             if (!password && !username) reply.code(400).send({ message: 'BODY_MALFORMED' });
-
-            const userAgent = headers['user-agent'];
 
             try {
                 const { user, tokenContent } = await verifyCredentials({ username, password }, entity);
@@ -33,7 +32,7 @@ export default async (fastify: FastifyInstance) => {
                         user: { ...user, accessToken },
                     });
             } catch (e) {
-                reply.code(401).send(e);
+                reply.code(e?.status ?? 500).send(e);
             }
         },
     });

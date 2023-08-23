@@ -7,7 +7,7 @@ export default {
     roots: ['<rootDir>/test', '<rootDir>/src'],
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
-        '^@config$': '<rootDir>/src/config',
+        '^@utils$': '<rootDir>/src/utils',
         '^@controllers$': '<rootDir>/src/controllers',
         '^@plugins$': '<rootDir>/src/plugins',
         '^@services$': '<rootDir>/src/services',

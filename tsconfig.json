@@ -37,8 +37,8 @@
             }
         ],
         "paths": {
-            "@config": [
-                "src/config"
+            "@utils": [
+                "src/utils"
             ],
             "@controllers": [
                 "src/controllers"

@@ -16,7 +16,7 @@ declare module 'fastify' {
  * @see https://github.com/auth0/node-jsonwebtoken
  */
 export default plugin((async (fastify, opts, done) => {
-    if (fastify.hasDecorator('jwt')) return done();
+    if (fastify.hasDecorator('jsonWebToken')) return done();
 
     const algorithm: Algorithm = 'HS256'; // length: 256 bits;
     const accessExpiresIn = 900000; // 15 minutes
@@ -70,7 +70,7 @@ export default plugin((async (fastify, opts, done) => {
         return { token: decoded, state: 'VALID' };
     };
 
-    fastify.decorate('JsonWebToken', {
+    fastify.decorate('jsonWebToken', {
         signAccessToken,
         signRefreshToken,
         verifyAccessToken: (token: string) => verifyToken(token, jwtVerifyOpts),

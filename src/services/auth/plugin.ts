@@ -1,4 +1,5 @@
 import { Customer, User } from '@prisma/client';
+import { ServerError } from '@utils';
 import type { FastifyPluginCallback } from 'fastify';
 import plugin from 'fastify-plugin';
 import { LogUserConnection, VerifyCredentials } from './types';
@@ -23,13 +24,13 @@ export default plugin((async (fastify, opts, done) => {
         `;
 
         if (!user) {
-            throw new Error('USER_NOT_FOUND');
+            throw new ServerError('USER_NOT_FOUND', { status: 404 });
         }
         if (user.revoked) {
-            throw new Error('USER_REVOKED');
+            throw new ServerError('USER_REVOKED', { status: 401 });
         }
         if (!(await bcrypt.compareStrings(password, user.password))) {
-            throw new Error('USER_INCORRECT_PASSWORD');
+            throw new ServerError('USER_INCORRECT_PASSWORD', { status: 401 });
         }
 
         delete user.password;
@@ -64,7 +65,7 @@ export default plugin((async (fastify, opts, done) => {
                 },
             });
         } else {
-            throw new Error('USER_INVALID_ENTITY');
+            throw new ServerError('USER_INVALID_ENTITY', { status: 400 });
         }
     };
 

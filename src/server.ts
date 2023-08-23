@@ -1,4 +1,4 @@
-import { envCheck, isProduction, registerPlugins } from '@config';
+import { envCheck, isProduction, registerPlugins } from '@utils';
 import Fastify from 'fastify';
 import qs from 'qs';
 
