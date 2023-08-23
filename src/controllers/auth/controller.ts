@@ -32,7 +32,7 @@ export default async (fastify: FastifyInstance) => {
                         user: { ...user, accessToken },
                     });
             } catch (e) {
-                reply.code(e?.status ?? 500).send(e);
+                reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
             }
         },
     });
