@@ -5,7 +5,7 @@
     "version": "0.1.0",
     "readme": "README.md",
     "scripts": {
-        "dev": "nodemon -q --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts --onSuccess \"node --inspect=0.0.0.0:9229 dist/index.js\"",
+        "dev": "nodemon --watch 'src/**/*.ts' --exec node --inspect-brk=0.0.0.0:9229 -r ts-node/register src/index.ts",
         "build": "tsc",
         "start": "node ./dist/index.js",
         "test": "jest --verbose",
@@ -50,6 +50,7 @@
         "ts-jest": "latest",
         "ts-node": "latest",
         "tsconfig-paths": "latest",
-        "typescript": "latest"
+        "typescript": "latest",
+        "undici": "^5.23.0"
     }
 }
