@@ -6,7 +6,7 @@ Database manipulations such as _Migrations_ are done using the [Prisma CLI](http
 
 ### Prisma Studio
 
-Prisma offer a database manager. Launch the following script to start Prisma Studio on port **5555** using the following script:
+Prisma offer a database manager. Launch the following script to start Prisma Studio on port **5555**.
 
 ```
 npm run docker:prisma:studio
