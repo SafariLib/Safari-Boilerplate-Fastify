@@ -1,33 +1,20 @@
 import type { FastifySchema } from 'fastify';
 
 export const loginSchema: FastifySchema = {
+    tags: ['Authentication'],
     body: {
         type: 'object',
-        required: ['password'],
-        maxProperties: 2,
-        minProperties: 2,
+        required: ['password', 'username'],
         properties: {
             username: {
                 type: 'string',
+                minLength: 5,
                 maxLength: 32,
-            },
-            email: {
-                type: 'string',
-                maxLength: 64,
             },
             password: {
                 type: 'string',
+                minLength: 12,
                 maxLength: 64,
-            },
-        },
-    },
-    params: {
-        type: 'object',
-        required: ['entity'],
-        properties: {
-            entity: {
-                type: 'string',
-                enum: ['user', 'customer'],
             },
         },
     },

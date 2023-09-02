@@ -1,5 +1,5 @@
 import { authController, debugController } from '@controllers';
-import { bcrypt, dbConnector, fastifyCookie, fastifyRateLimit, jsonWebToken } from '@plugins';
+import { bcrypt, dbConnector, fastifyCookie, fastifyRateLimit, fastifySwagger, jsonWebToken } from '@plugins';
 import { authService } from '@services';
 import type { FastifyInstance } from 'fastify';
 
@@ -19,7 +19,9 @@ export const registerPlugins = async (fastify: FastifyInstance) => {
     console.log();
     console.log('> Registering plugins...');
 
-    [dbConnector, fastifyCookie, fastifyRateLimit, jsonWebToken, bcrypt].forEach(plugin => fastify.register(plugin));
+    [dbConnector, fastifyCookie, fastifyRateLimit, jsonWebToken, bcrypt, fastifySwagger].forEach(plugin =>
+        fastify.register(plugin),
+    );
     [debugController, authService].forEach(service => fastify.register(service));
     [authController].forEach(controller => fastify.register(controller));
 
