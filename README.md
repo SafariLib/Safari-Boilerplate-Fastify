@@ -8,13 +8,14 @@
 
 Boilerplate for Rest API development.
 
-- [**Fastify documentation**](https://fastify.dev/docs/latest/)
-- [**Postgres documentation**](https://www.postgresql.org/docs/)
-- [**Prisma documentation**](https://www.prisma.io/docs)
-- [**Docker documentation**](https://docs.docker.com/)
+-   [Fastify documentation](https://fastify.dev/docs/latest/)
+-   [Postgres documentation](https://www.postgresql.org/docs/)
+-   [Prisma documentation](https://www.prisma.io/docs)
+-   [Docker documentation](https://docs.docker.com/)
 
 ## Documentation
 
-- [**Project initialization**](./doc/initialization.md)
-- [**Database management**](./doc/prisma.md)
-- [**API Error codes**](./doc/api_error_codes.md)
+-   [Project initialization](./doc/initialization.md)
+-   [Database management](./doc/prisma.md)
+-   [API Error codes](./doc/api_error_codes.md)
+-   [Tests and debug](./doc/tests_and_debug.md)

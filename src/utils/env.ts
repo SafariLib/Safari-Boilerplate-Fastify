@@ -1,6 +1,7 @@
 const environmentVariables = ['NODE_ENV', 'POSTGRES_URI', 'SECRET_COOKIE', 'SECRET_JWT', 'SERVER_PORT'];
 
 export const envCheck = () => {
+    console.log();
     console.log('> Checking environment variables...');
 
     const missingVariables = environmentVariables.filter(env => !process.env[env]);

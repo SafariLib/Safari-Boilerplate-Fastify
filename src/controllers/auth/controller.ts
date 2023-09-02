@@ -4,14 +4,6 @@ import type { LoginPayload } from './types';
 
 export default async (fastify: FastifyInstance) => {
     fastify.route({
-        method: 'GET',
-        url: '/test',
-        handler: async (request: Request, reply: Reply) => {
-            reply.code(200).send({ message: 'Hello World' });
-        },
-    });
-
-    fastify.route({
         method: 'POST',
         url: '/auth/login/:entity',
         schema: loginSchema,

@@ -1,8 +1,5 @@
 import server from '../../src/server';
-import ApiCaller from '../apiCaller';
-import { createTestData, deleteTestData } from './utils';
-
-const { GET, POST } = ApiCaller;
+import { CUTOMERS, PASSWORD, USERS, createTestData, deleteTestData } from './utils';
 
 beforeAll(async () => {
     await server.ready();
@@ -14,26 +11,32 @@ afterAll(async () => {
     server.close();
 });
 
-// FIXME: Debbuger does not seems to work with POST requests ???
 (async () => {
     describe('Authentication', () => {
         test('Successfull user/customer connection', async () => {
-            const { status } = await POST('/auth/login/user', {
-                username: 'test_user01',
-                password: 'P@ssw0rdTest123',
-            });
-            await POST('/auth/login/user', {
-                username: 'test_user01',
-                password: 'P@ssw0rdTest123',
-            });
-            await POST('/auth/login/user', {
-                username: 'test_user01',
-                password: 'P@ssw0rdTest123',
-            });
+            for (const username of USERS) {
+                const { statusCode } = await server.inject({
+                    method: 'POST',
+                    url: '/auth/login/user',
+                    payload: {
+                        username,
+                        password: PASSWORD,
+                    },
+                });
+                expect(statusCode).toBe(200);
+            }
 
-            await GET('/test');
-
-            expect(status).toBe(200);
+            for (const username of CUTOMERS) {
+                const { statusCode } = await server.inject({
+                    method: 'POST',
+                    url: '/auth/login/admin',
+                    payload: {
+                        username,
+                        password: PASSWORD,
+                    },
+                });
+                expect(statusCode).toBe(200);
+            }
         });
     });
 })();
