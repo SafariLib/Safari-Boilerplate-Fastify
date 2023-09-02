@@ -17,9 +17,9 @@ export default async (fastify: FastifyInstance) => {
     */
     fastify.route({
         method: 'POST',
-        url: '/test',
+        url: '/test/:id',
         handler: async (request: Request, reply: Reply) => {
-            reply.code(200).send({ message: 'Successfull test' });
+            reply.code(200).send(request.params);
         },
     });
 };

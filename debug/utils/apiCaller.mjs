@@ -31,6 +31,7 @@ const POST = async (endpoint, body) => {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
         method: 'POST',
         body: JSON.stringify(body),
+        headers: { 'Content-Type': 'application/json' },
     });
 
     await logResponse(res, 'POST', endpoint);

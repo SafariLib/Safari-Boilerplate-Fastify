@@ -6,12 +6,8 @@ import apiCaller from './utils/apiCaller.mjs';
 */
 
 (async () => {
-    await apiCaller.GET('/ping');
-
-    await apiCaller.POST('/test', { lol: 'lol' });
-
-    // const response = await apiCaller.POST('/auth/login/user', {
-    //     username: 'admin',
-    //     password: 'P@ssword123!',
-    // });
+    const response = await apiCaller.POST('/auth/login/user', {
+        username: 'admin',
+        password: 'P@ssword123!',
+    });
 })();

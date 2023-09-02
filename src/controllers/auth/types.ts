@@ -3,7 +3,4 @@ export interface LoginPayload {
         username: string;
         password: string;
     };
-    Params: {
-        entity: 'user' | 'customer';
-    };
 }
