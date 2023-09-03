@@ -1,4 +1,4 @@
-import apiCaller from './utils/apiCaller.mjs';
+import testLogin from './tests/auth/test.login.mjs';
 
 /*
     WARNING: This script is for debug purposes only.
@@ -6,8 +6,10 @@ import apiCaller from './utils/apiCaller.mjs';
 */
 
 (async () => {
-    const response = await apiCaller.POST('/auth/login/user', {
-        username: 'admin',
-        password: 'P@ssword123!',
-    });
+    // const response = await apiCaller.POST('/auth/login/user', {
+    //     username: 'admin',
+    //     password: 'P@ssword123!',
+    // });
+
+    await testLogin();
 })();

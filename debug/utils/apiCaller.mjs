@@ -10,14 +10,15 @@ const BASE_URL = 'http://localhost:8080';
 /**
  * Makes a GET request to the API
  * @param {endpoint} endpoint
+ * @param {boolean} verbose
  * @returns {Promise<Response>}
  */
-const GET = async endpoint => {
+const GET = async (endpoint, verbose = false) => {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
         method: 'GET',
     });
 
-    await logResponse(res, 'GET', endpoint);
+    verbose && (await logResponse(res, 'GET', endpoint));
     return res;
 };
 
@@ -25,16 +26,17 @@ const GET = async endpoint => {
  * Makes a POST request to the API
  * @param {endpoint} endpoint
  * @param {any} body
+ * @param {boolean} verbose
  * @returns {Promise<Response>}
  **/
-const POST = async (endpoint, body) => {
+const POST = async (endpoint, body, verbose = false) => {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
         method: 'POST',
         body: JSON.stringify(body),
         headers: { 'Content-Type': 'application/json' },
     });
 
-    await logResponse(res, 'POST', endpoint);
+    verbose && (await logResponse(res, 'POST', endpoint));
     return res;
 };
 

@@ -1,7 +1,7 @@
 const environmentVariables = ['NODE_ENV', 'POSTGRES_URI', 'SECRET_COOKIE', 'SECRET_JWT', 'SERVER_PORT'];
 
 export const envCheck = () => {
-    console.log('');
+    console.log();
     console.log('> Checking environment variables...');
 
     const missingVariables = environmentVariables.filter(env => !process.env[env]);
@@ -11,7 +11,7 @@ export const envCheck = () => {
 
     console.log('Missing environment variables:');
     missingVariables.forEach(env => console.log(`- ${env}`));
-    console.log('');
+    console.log();
 
     throw new Error('You are missing one or more environment variables, please check the readme for more information.');
 };

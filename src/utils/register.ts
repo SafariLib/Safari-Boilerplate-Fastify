@@ -14,7 +14,7 @@ import type { FastifyInstance } from 'fastify';
  * - Hooks
  */
 export const registerPlugins = async (fastify: FastifyInstance) => {
-    console.log('');
+    console.log();
     console.log('> Registering plugins...');
 
     [
@@ -37,7 +37,7 @@ export const registerPlugins = async (fastify: FastifyInstance) => {
     console.log('Plugins successfully registered');
 
     fastify.ready(() => {
-        console.log('');
+        console.log();
         console.log('> Plugins Tree:');
         console.log(fastify.printPlugins());
         console.log('> Routes Tree:');
