@@ -109,4 +109,17 @@ export const initData = async () => {
         await cleanTestData();
         await createTestData();
     }
+
+    return {
+        testUsers: USERS.map(user => ({
+            ...user,
+            refreshToken: null,
+            accessToken: null,
+        })),
+        testCustomers: CUTOMERS.map(customer => ({
+            ...customer,
+            refreshToken: null,
+            accessToken: null,
+        })),
+    };
 };
