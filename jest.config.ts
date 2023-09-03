@@ -8,10 +8,10 @@ export default {
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
         '^@utils$': '<rootDir>/src/utils',
-        '^@controllers$': '<rootDir>/src/controllers',
-        '^@plugins$': '<rootDir>/src/plugins',
-        '^@services$': '<rootDir>/src/services',
+        '^@controllers/(.*)$': '<rootDir>/src/controllers/$1',
+        '^@hooks/(.*)$': '<rootDir>/src/hooks/$1',
+        '^@plugins/(.*)$': '<rootDir>/src/plugins/$1',
+        '^@services/(.*)$': '<rootDir>/src/services/$1',
         '^@types$': '<rootDir>/src/types',
-        '^@schemas$': '<rootDir>/src/schemas',
     },
 };

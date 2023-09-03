@@ -19,3 +19,4 @@ Boilerplate for Rest API development.
 -   [Database management](./doc/prisma.md)
 -   [API Error codes](./doc/api_error_codes.md)
 -   [Tests and debug](./doc/tests_and_debug.md)
+-   [Authentification configuration](./doc/auth_config.md)

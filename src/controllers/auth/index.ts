@@ -20,12 +20,10 @@ export default async (fastify: FastifyInstance) => {
                 const refreshToken = signRefreshToken(tokenContent);
                 await logUserConnection(user.id, ip, userAgent);
 
-                reply
-                    .code(200)
-                    .setCookie('refreshToken', refreshToken, cookieOpts)
-                    .send({
-                        user: { ...user, accessToken },
-                    });
+                reply.code(200).setCookie('refreshToken', refreshToken, cookieOpts).send({
+                    user,
+                    accessToken,
+                });
             } catch (e) {
                 reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
             }

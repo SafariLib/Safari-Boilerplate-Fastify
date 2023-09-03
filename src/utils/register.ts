@@ -1,6 +1,3 @@
-import { authController, debugController } from '@controllers';
-import { bcrypt, dbConnector, fastifyCookie, fastifyRateLimit, fastifySwagger, jsonWebToken } from '@plugins';
-import { authService } from '@services';
 import type { FastifyInstance } from 'fastify';
 
 /**
@@ -14,21 +11,33 @@ import type { FastifyInstance } from 'fastify';
  * - Plugins (dbConnector should come first)
  * - Services
  * - Controllers
+ * - Hooks
  */
 export const registerPlugins = async (fastify: FastifyInstance) => {
-    console.log();
+    console.log('');
     console.log('> Registering plugins...');
 
-    [dbConnector, fastifyCookie, fastifyRateLimit, jsonWebToken, bcrypt, fastifySwagger].forEach(plugin =>
-        fastify.register(plugin),
+    [
+        import('@plugins/dbConnector'),
+        import('@plugins/fastifyCookie'),
+        import('@plugins/fastifyRateLimit'),
+        import('@plugins/jsonWebToken'),
+        import('@plugins/bcrypt'),
+        import('@plugins/fastifySwagger'),
+    ].forEach(plugin => fastify.register(plugin));
+
+    [import('@services/auth')].forEach(service => fastify.register(service));
+
+    [import('@controllers/debug'), import('@controllers/auth'), import('@controllers/user')].forEach(controller =>
+        fastify.register(controller),
     );
-    [debugController, authService].forEach(service => fastify.register(service));
-    [authController].forEach(controller => fastify.register(controller));
+
+    [import('@hooks/onRequest/verifyToken')].forEach(hook => fastify.register(hook));
 
     console.log('Plugins successfully registered');
 
     fastify.ready(() => {
-        console.log();
+        console.log('');
         console.log('> Plugins Tree:');
         console.log(fastify.printPlugins());
         console.log('> Routes Tree:');

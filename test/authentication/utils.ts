@@ -1,59 +1,94 @@
 import { FastifyInstance } from 'fastify';
-import { ERoles } from '../../src/types';
 
 export const PASSWORD = 'P@ssw0rdTest123';
-export const USERS = ['test_user01', 'test_user02'];
-export const ADMINS = ['test_user03'];
-export const SUPER_ADMINS = ['test_user04'];
-export const CUTOMERS = ['test_customer01', 'test_customer02'];
+
+export const USERS = ['test_user'].map(username => ({
+    username,
+    email: `${username}@test.test`,
+    password: PASSWORD,
+    role: 1,
+}));
+
+export const ADMINS = ['test_admin'].map(username => ({
+    username,
+    email: `${username}@test.test`,
+    password: PASSWORD,
+    role: 0,
+}));
+
+export const CUTOMERS = ['test_customer'].map(username => ({
+    username,
+    email: `${username}@test.test`,
+    password: PASSWORD,
+}));
 
 export const createTestData = async (server: FastifyInstance) => {
-    const { prisma } = server;
-    await prisma.user.createMany({
-        data: [
-            ...USERS.map(username => ({
-                username,
-                email: `${username}@test.test`,
-                password: PASSWORD,
-                role: ERoles.USER,
+    const { prisma, bcrypt } = server;
+    const hashedPassword = await bcrypt.hashString(PASSWORD);
+
+    const doCreate = async () => {
+        await prisma.user.createMany({
+            data: [...USERS, ...ADMINS].map(user => ({
+                ...user,
+                password: hashedPassword,
             })),
-            ...ADMINS.map(username => ({
-                username,
-                email: `${username}@test.test`,
-                password: PASSWORD,
-                role: ERoles.ADMIN,
+        });
+        await prisma.customer.createMany({
+            data: CUTOMERS.map(customer => ({
+                ...customer,
+                password: hashedPassword,
             })),
-            ...SUPER_ADMINS.map(username => ({
-                username,
-                email: `${username}@test.test`,
-                password: PASSWORD,
-                role: ERoles.SUPER_ADMIN,
-            })),
-        ],
-    });
-    await prisma.customer.createMany({
-        data: CUTOMERS.map(username => ({
-            username,
-            email: `${username}@test.test`,
-            password: PASSWORD,
-        })),
-    });
+        });
+    };
+
+    try {
+        return await doCreate();
+    } catch (e) {
+        await deleteTestData(server);
+        return await doCreate();
+    }
 };
 
 export const deleteTestData = async (server: FastifyInstance) => {
     const { prisma } = server;
-    await prisma.user.deleteMany({
+    const usersIds = await prisma.user.findMany({
         where: {
             username: {
-                in: [...USERS, ...ADMINS, ...SUPER_ADMINS],
+                in: [...USERS.map(user => user.username), ...ADMINS.map(admin => admin.username)],
             },
         },
+        select: {
+            id: true,
+        },
     });
-    await prisma.customer.deleteMany({
+
+    const customersIds = await prisma.customer.findMany({
         where: {
             username: {
-                in: CUTOMERS,
+                in: CUTOMERS.map(customer => customer.username),
             },
         },
+        select: {
+            id: true,
+        },
     });
+
+    await prisma.$executeRaw`
+        DELETE FROM "UserRefreshTokenCache" WHERE "user_id" = ANY(${usersIds.map(user => user.id)});
+    `;
+    await prisma.$executeRaw`
+        DELETE FROM "UserConnectionLog" WHERE "user_id" = ANY(${usersIds.map(user => user.id)});
+    `;
+    await prisma.$executeRaw`
+        DELETE FROM "User" WHERE "id" = ANY(${usersIds.map(user => user.id)});
+    `;
+    await prisma.$executeRaw`
+        DELETE FROM "CustomerRefreshTokenCache" WHERE "customer_id" = ANY(${customersIds.map(customer => customer.id)});
+    `;
+    await prisma.$executeRaw`
+        DELETE FROM "CustomerConnectionLog" WHERE "customer_id" = ANY(${customersIds.map(customer => customer.id)});
+    `;
+    await prisma.$executeRaw`
+        DELETE FROM "Customer" WHERE "id" = ANY(${customersIds.map(customer => customer.id)});
+    `;
 };

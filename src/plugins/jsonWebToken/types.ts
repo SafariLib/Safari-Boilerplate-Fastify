@@ -1,21 +1,19 @@
 import { CookieSerializeOptions } from '@fastify/cookie';
-import { Token, TokenContent } from '../../types';
-
-export type TokenState = 'INVALID' | 'EXPIRED' | 'VALID';
+import { Token, TokenContent } from '@types';
+import { VerifyOptions } from 'jsonwebtoken';
 
 export type SignAccessToken = (payload: TokenContent) => string;
 
 export type SignRefreshToken = (payload: TokenContent) => string;
 
-export type VerifyAccessToken = (token: string) => { token: Token; state: TokenState };
+export type VerifyToken = (token: string, verifyOpts: VerifyOptions) => Token;
 
-export type VerifyRefreshToken = (token: string) => { token: Token; state: TokenState };
-
+export type CacheUserRefreshToken = (token: string, userId: number, ip: string, userAgent: string) => void;
 export interface JsonWebToken {
     signAccessToken: (payload: TokenContent) => string;
     signRefreshToken: (payload: TokenContent) => string;
-    verifyAccessToken: (token: string) => { token: Token; state: TokenState };
-    verifyRefreshToken: (token: string) => { token: Token; state: TokenState };
+    verifyAccessToken: (token: string) => Token;
+    verifyRefreshToken: (token: string) => Token;
     cookieOpts: CookieSerializeOptions;
     tokens: {
         access: Token | null;

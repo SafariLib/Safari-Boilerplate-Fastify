@@ -41,21 +41,21 @@
             "@utils": [
                 "src/utils"
             ],
-            "@controllers": [
-                "src/controllers"
+            "@controllers/*": [
+                "src/controllers/*"
             ],
-            "@plugins": [
-                "src/plugins"
+            "@hooks/*": [
+                "src/hooks/*"
             ],
-            "@services": [
-                "src/services"
+            "@plugins/*": [
+                "src/plugins/*"
+            ],
+            "@services/*": [
+                "src/services/*"
             ],
             "@types": [
                 "src/types"
-            ],
-            "@schemas": [
-                "src/schemas"
-            ],
+            ]
         }
     },
     "ts-node": {

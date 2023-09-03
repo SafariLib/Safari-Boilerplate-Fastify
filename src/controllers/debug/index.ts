@@ -9,17 +9,4 @@ export default async (fastify: FastifyInstance) => {
             reply.code(200).send({ message });
         },
     });
-
-    /*
-        --------------------
-            Test routes
-        --------------------
-    */
-    fastify.route({
-        method: 'POST',
-        url: '/test/:id',
-        handler: async (request: Request, reply: Reply) => {
-            reply.code(200).send(request.params);
-        },
-    });
 };

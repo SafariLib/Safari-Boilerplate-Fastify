@@ -3,7 +3,7 @@ import type { Token } from '@types';
 import type { FastifyPluginCallback } from 'fastify';
 import plugin from 'fastify-plugin';
 import jsonwebtoken, { Algorithm, SignOptions, VerifyOptions } from 'jsonwebtoken';
-import { JsonWebToken, SignAccessToken, SignRefreshToken, TokenState } from './types';
+import type { CacheUserRefreshToken, JsonWebToken, SignAccessToken, SignRefreshToken, VerifyToken } from './types';
 
 declare module 'fastify' {
     interface FastifyInstance {
@@ -28,11 +28,11 @@ export default plugin((async (fastify, opts, done) => {
         sameSite: 'strict',
         expires: new Date(Date.now() + 36000000),
     };
-    const jwtSignOpts: SignOptions = {
+    const jwtSignOptions: SignOptions = {
         algorithm,
         expiresIn: accessExpiresIn,
     };
-    const jwtVerifyOpts: VerifyOptions = {
+    const jwtVerifyOptions: VerifyOptions = {
         algorithms: [algorithm],
         maxAge: accessExpiresIn,
     };
@@ -50,30 +50,43 @@ export default plugin((async (fastify, opts, done) => {
         refresh: null as Token | null,
     };
 
-    const signAccessToken: SignAccessToken = payload => {
-        return jsonwebtoken.sign(payload, process.env.SECRET_JWT, jwtSignOpts);
-    };
+    const signAccessToken: SignAccessToken = payload =>
+        jsonwebtoken.sign(payload, process.env.SECRET_JWT, jwtSignOptions);
 
-    const signRefreshToken: SignRefreshToken = payload => {
-        return jsonwebtoken.sign(payload, process.env.SECRET_JWT, jwtRefreshSignOpts);
-    };
+    const signRefreshToken: SignRefreshToken = payload =>
+        jsonwebtoken.sign(payload, process.env.SECRET_JWT, jwtRefreshSignOpts);
 
-    const verifyToken = (token: string, verifyOpts: VerifyOptions): { token: Token; state: TokenState } => {
+    const verifyToken: VerifyToken = (token, verifyOpts) => {
         const decoded = jsonwebtoken.verify(token, process.env.SECRET_JWT, verifyOpts) as Token;
-        if (!decoded || typeof decoded !== 'object') {
-            return { token: null, state: 'INVALID' };
-        }
-        if (decoded.exp * 1000 < Date.now()) {
-            return { token: null, state: 'EXPIRED' };
-        }
 
-        return { token: decoded, state: 'VALID' };
+        if (!decoded || typeof decoded !== 'object') {
+            throw { errorCode: 'AUTH_TOKEN_INVALID', status: 401 };
+        } else if (decoded.exp * 1000 < Date.now()) {
+            throw { errorCode: 'AUTH_TOKEN_EXPIRED', status: 401 };
+        } else {
+            return decoded;
+        }
+    };
+
+    // Finish me
+    const cacheRefreshToken: CacheUserRefreshToken = (token: string, userId: number, ip: string, userAgent: string) => {
+        const { prisma } = fastify;
+
+        prisma.userRefreshTokenCache.create({
+            data: {
+                token: token,
+                user_id: userId,
+                ip,
+                user_agent: userAgent,
+                expires_at: new Date(Date.now() + refreshExpiresIn),
+            },
+        });
     };
 
     fastify.decorate('jsonWebToken', {
         signAccessToken,
         signRefreshToken,
-        verifyAccessToken: (token: string) => verifyToken(token, jwtVerifyOpts),
+        verifyAccessToken: (token: string) => verifyToken(token, jwtVerifyOptions),
         verifyRefreshToken: (token: string) => verifyToken(token, jwtRefreshVerifyOpts),
         cookieOpts,
         tokens,
