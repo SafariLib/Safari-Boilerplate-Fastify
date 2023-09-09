@@ -20,23 +20,12 @@ CREATE TABLE "UserRefreshTokenCache" (
     "token" TEXT NOT NULL,
     "ip" TEXT NOT NULL,
     "user_agent" TEXT NOT NULL,
-    "revoked" BOOLEAN NOT NULL DEFAULT true,
+    "revoked" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3),
     "expires_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "UserRefreshTokenCache_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "UserConnectionLog" (
-    "id" SERIAL NOT NULL,
-    "user_id" INTEGER NOT NULL,
-    "ip" TEXT NOT NULL,
-    "user_agent" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "UserConnectionLog_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -69,17 +58,6 @@ CREATE TABLE "CustomerRefreshTokenCache" (
     CONSTRAINT "CustomerRefreshTokenCache_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "CustomerConnectionLog" (
-    "id" SERIAL NOT NULL,
-    "customer_id" INTEGER NOT NULL,
-    "ip" TEXT NOT NULL,
-    "user_agent" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "CustomerConnectionLog_pkey" PRIMARY KEY ("id")
-);
-
 -- CreateIndex
 CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
 
@@ -102,10 +80,4 @@ CREATE UNIQUE INDEX "CustomerRefreshTokenCache_token_key" ON "CustomerRefreshTok
 ALTER TABLE "UserRefreshTokenCache" ADD CONSTRAINT "UserRefreshTokenCache_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "UserConnectionLog" ADD CONSTRAINT "UserConnectionLog_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "CustomerRefreshTokenCache" ADD CONSTRAINT "CustomerRefreshTokenCache_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "CustomerConnectionLog" ADD CONSTRAINT "CustomerConnectionLog_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

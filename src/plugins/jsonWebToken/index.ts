@@ -80,7 +80,7 @@ export default plugin((async (fastify, opts, done) => {
         userId: number,
         ip: string,
         userAgent: string,
-    ) =>
+    ) => {
         await fastify.prisma.userRefreshTokenCache.create({
             data: {
                 user_id: userId,
@@ -90,13 +90,14 @@ export default plugin((async (fastify, opts, done) => {
                 expires_at: new Date(Date.now() + refreshExpiresIn),
             },
         });
+    };
 
     const cacheCustomerRefreshToken: CacheCustomerRefreshToken = async (
         token: string,
         customerId: number,
         ip: string,
         userAgent: string,
-    ) =>
+    ) => {
         await fastify.prisma.customerRefreshTokenCache.create({
             data: {
                 customer_id: customerId,
@@ -106,6 +107,21 @@ export default plugin((async (fastify, opts, done) => {
                 expires_at: new Date(Date.now() + refreshExpiresIn),
             },
         });
+    };
+
+    const revokeUserRefreshToken = async (token: string) => {
+        await fastify.prisma.userRefreshTokenCache.update({
+            where: { token: token },
+            data: { revoked: true },
+        });
+    };
+
+    const revokeCustomerRefreshToken = async (token: string) => {
+        await fastify.prisma.customerRefreshTokenCache.update({
+            where: { token: token },
+            data: { revoked: true },
+        });
+    };
 
     fastify.decorate('jsonWebToken', {
         signAccessToken,
@@ -114,6 +130,8 @@ export default plugin((async (fastify, opts, done) => {
         verifyRefreshToken: (token: string) => verifyToken(token, jwtRefreshVerifyOpts),
         cacheUserRefreshToken,
         cacheCustomerRefreshToken,
+        revokeUserRefreshToken,
+        revokeCustomerRefreshToken,
         cookieOpts,
         tokens,
     });

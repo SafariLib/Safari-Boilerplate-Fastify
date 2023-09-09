@@ -8,16 +8,26 @@ export type SignRefreshToken = (payload: TokenContent) => string;
 
 export type VerifyToken = (token: string, verifyOpts: VerifyOptions) => Token;
 
-export type CacheUserRefreshToken = (token: string, userId: number, ip: string, userAgent: string) => void;
+export type CacheUserRefreshToken = (token: string, userId: number, ip: string, userAgent: string) => Promise<void>;
 
-export type CacheCustomerRefreshToken = (token: string, customerId: number, ip: string, userAgent: string) => void;
+export type CacheCustomerRefreshToken = (
+    token: string,
+    customerId: number,
+    ip: string,
+    userAgent: string,
+) => Promise<void>;
+
+export type RevokeToken = (token: string) => Promise<void>;
+
 export interface JsonWebToken {
-    signAccessToken: (payload: TokenContent) => string;
-    signRefreshToken: (payload: TokenContent) => string;
+    signAccessToken: SignAccessToken;
+    signRefreshToken: SignRefreshToken;
     verifyAccessToken: (token: string) => Token;
     verifyRefreshToken: (token: string) => Token;
-    cacheUserRefreshToken: (token: string, userId: number, ip: string, userAgent: string) => void;
-    cacheCustomerRefreshToken: (token: string, customerId: number, ip: string, userAgent: string) => void;
+    cacheUserRefreshToken: CacheUserRefreshToken;
+    cacheCustomerRefreshToken: CacheCustomerRefreshToken;
+    revokeUserRefreshToken: RevokeToken;
+    revokeCustomerRefreshToken: RevokeToken;
     cookieOpts: CookieSerializeOptions;
     tokens: {
         access: Token | null;

@@ -1,5 +1,5 @@
-import testConnectionLogs from './tests/auth/test.log.mjs';
 import testLogin from './tests/auth/test.login.mjs';
+import testToken from './tests/auth/test.token.mjs';
 
 (async () => {
     // const response = await apiCaller.POST('/auth/login/user', {
@@ -11,5 +11,5 @@ import testLogin from './tests/auth/test.login.mjs';
     //          AUTH TESTS
     // -----------------------------
     await testLogin();
-    await testConnectionLogs();
+    await testToken();
 })();

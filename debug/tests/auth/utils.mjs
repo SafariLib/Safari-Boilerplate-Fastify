@@ -24,24 +24,18 @@ export const CUTOMERS = ['test_customer'].map(username => ({
     password: PASSWORD,
 }));
 
-export const getUserConnectionLogs = async email => {
+export const getUserCachedToken = async email => {
     const prisma = new PrismaClient();
     await prisma.$connect();
 
     try {
         const { id } = await prisma.user.findUnique({
-            where: {
-                email,
-            },
-            select: {
-                id: true,
-            },
+            where: { email },
+            select: { id: true },
         });
 
-        return await prisma.userConnectionLog.findMany({
-            where: {
-                user_id: id,
-            },
+        return await prisma.userRefreshTokenCache.findMany({
+            where: { user_id: id },
         });
     } catch (e) {
         throw e;
@@ -50,24 +44,18 @@ export const getUserConnectionLogs = async email => {
     }
 };
 
-export const getCustomerConnectionLogs = async email => {
+export const getCustomerCachedToken = async email => {
     const prisma = new PrismaClient();
     await prisma.$connect();
 
     try {
         const { id } = await prisma.customer.findUnique({
-            where: {
-                email,
-            },
-            select: {
-                id: true,
-            },
+            where: { email },
+            select: { id: true },
         });
 
-        return await prisma.customerConnectionLog.findMany({
-            where: {
-                customer_id: id,
-            },
+        return await prisma.customerRefreshTokenCache.findMany({
+            where: { customer_id: id },
         });
     } catch (e) {
         throw e;
@@ -131,18 +119,12 @@ export const cleanTestData = async () => {
             DELETE FROM "UserRefreshTokenCache" WHERE "user_id" = ANY(${usersIds.map(user => user.id)});
         `;
         await prisma.$executeRaw`
-            DELETE FROM "UserConnectionLog" WHERE "user_id" = ANY(${usersIds.map(user => user.id)});
-        `;
-        await prisma.$executeRaw`
             DELETE FROM "User" WHERE "id" = ANY(${usersIds.map(user => user.id)});
         `;
         await prisma.$executeRaw`
             DELETE FROM "CustomerRefreshTokenCache" WHERE "customer_id" = ANY(${customersIds.map(
                 customer => customer.id,
             )});
-        `;
-        await prisma.$executeRaw`
-            DELETE FROM "CustomerConnectionLog" WHERE "customer_id" = ANY(${customersIds.map(customer => customer.id)});
         `;
         await prisma.$executeRaw`
             DELETE FROM "Customer" WHERE "id" = ANY(${customersIds.map(customer => customer.id)});

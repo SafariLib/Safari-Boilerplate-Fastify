@@ -26,7 +26,6 @@ model User {
 
   // Relationship with refresh tokens
   refreshTokens     UserRefreshTokenCache[]
-  UserConnectionLog UserConnectionLog[]
 }
 
 model UserRefreshTokenCache {
@@ -39,17 +38,6 @@ model UserRefreshTokenCache {
   created_at DateTime  @default(now())
   updated_at DateTime?
   expires_at DateTime
-
-  // Relationship with user
-  user User @relation(fields: [user_id], references: [id])
-}
-
-model UserConnectionLog {
-  id         Int      @id @default(autoincrement())
-  user_id    Int
-  ip         String
-  user_agent String
-  created_at DateTime @default(now())
 
   // Relationship with user
   user User @relation(fields: [user_id], references: [id])
@@ -71,7 +59,6 @@ model Customer {
 
   // Relationship with refresh tokens
   refreshTokens         CustomerRefreshTokenCache[]
-  CustomerConnectionLog CustomerConnectionLog[]
 }
 
 model CustomerRefreshTokenCache {
@@ -84,17 +71,6 @@ model CustomerRefreshTokenCache {
   created_at  DateTime  @default(now())
   updated_at  DateTime?
   expires_at  DateTime
-
-  // Relationship with customer
-  customer Customer @relation(fields: [customer_id], references: [id])
-}
-
-model CustomerConnectionLog {
-  id          Int      @id @default(autoincrement())
-  customer_id Int
-  ip          String
-  user_agent  String
-  created_at  DateTime @default(now())
 
   // Relationship with customer
   customer Customer @relation(fields: [customer_id], references: [id])

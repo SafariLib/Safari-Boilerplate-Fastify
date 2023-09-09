@@ -42,9 +42,6 @@ export default async () => {
     {
         /*
             Login should fail
-
-            // NOTE: Schema validation is shared between users and customers.
-            Tests aren't duplicated for customers
         */
 
         for (const user of testUsers) {
@@ -91,31 +88,60 @@ export default async () => {
             Login should return user object and tokens
         */
 
-        const response = await apiCaller.POST('/auth/login/user', {
+        const userResponse = await apiCaller.POST('/auth/login/user', {
             username: testUsers[0].username,
             password: PASSWORD,
         });
 
-        const jsonContent = await response.json();
+        const userJsonContent = await userResponse.json();
 
-        if (jsonContent.user.password !== undefined) {
-            logger.error(`FAILED: Login does return password`, response);
+        if (userJsonContent.user?.password !== undefined) {
+            logger.error(`FAILED: User Login does return password`, userResponse);
         } else {
-            logger.success(`SUCCESS: Login does not return password`);
+            logger.success(`SUCCESS: User Login does not return password`);
         }
 
-        if (jsonContent.accessToken === undefined) {
-            logger.error(`FAILED: Login does not return accessToken`, response);
+        if (userJsonContent.accessToken === undefined) {
+            logger.error(`FAILED: User Login does not return accessToken`, userResponse);
         } else {
-            logger.success(`SUCCESS: Login does return accessToken`);
+            logger.success(`SUCCESS: User Login does return accessToken`);
         }
 
-        const refreshToken = response.headers.get('set-cookie').split(';')[0].split('=')[1];
+        const userRefreshToken = userResponse.headers.get('set-cookie').split(';')[0].split('=')[1];
 
-        if (refreshToken === undefined) {
-            logger.error(`FAILED: Login does not return refreshToken`, response);
+        if (userRefreshToken === undefined) {
+            logger.error(`FAILED: User Login does not return refreshToken`, userResponse);
         } else {
-            logger.success(`SUCCESS: Login does return refreshToken`);
+            logger.success(`SUCCESS: User Login does return refreshToken`);
+        }
+
+        // For customer
+
+        const customerResponse = await apiCaller.POST('/auth/login/customer', {
+            username: testCustomers[0].username,
+            password: PASSWORD,
+        });
+
+        const customerJsonContent = await customerResponse.json();
+
+        if (customerJsonContent.user?.password !== undefined) {
+            logger.error(`FAILED: Customer Login does return password`, customerResponse);
+        } else {
+            logger.success(`SUCCESS: Customer Login does not return password`);
+        }
+
+        if (customerJsonContent.accessToken === undefined) {
+            logger.error(`FAILED: Customer Login does not return accessToken`, customerResponse);
+        } else {
+            logger.success(`SUCCESS: Customer Login does return accessToken`);
+        }
+
+        const customerRefreshToken = customerResponse.headers.get('set-cookie').split(';')[0].split('=')[1];
+
+        if (customerRefreshToken === undefined) {
+            logger.error(`FAILED: Customer Login does not return refreshToken`, customerResponse);
+        } else {
+            logger.success(`SUCCESS: Customer Login does return refreshToken`);
         }
     }
 
