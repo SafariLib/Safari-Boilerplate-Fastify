@@ -35,7 +35,7 @@ model UserRefreshTokenCache {
   token      String    @unique
   ip         String
   user_agent String
-  revoked    Boolean   @default(true)
+  revoked    Boolean   @default(false)
   created_at DateTime  @default(now())
   updated_at DateTime?
   expires_at DateTime

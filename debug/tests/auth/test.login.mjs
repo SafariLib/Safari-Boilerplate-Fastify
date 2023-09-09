@@ -2,8 +2,10 @@ import apiCaller from '../../utils/apiCaller.mjs';
 import logger from '../../utils/logger.mjs';
 import { PASSWORD, cleanTestData, initData } from './utils.mjs';
 
+const TESTS_NAME = 'login';
+
 export default async () => {
-    logger.startTest('login');
+    logger.startTest(TESTS_NAME);
     const { testUsers, testCustomers } = await initData();
 
     {
@@ -97,13 +99,13 @@ export default async () => {
         const jsonContent = await response.json();
 
         if (jsonContent.user.password !== undefined) {
-            logger.error(`FAILED: Login does not return password`, response);
+            logger.error(`FAILED: Login does return password`, response);
         } else {
             logger.success(`SUCCESS: Login does not return password`);
         }
 
         if (jsonContent.accessToken === undefined) {
-            logger.error(`FAILED: Login does return accessToken`, response);
+            logger.error(`FAILED: Login does not return accessToken`, response);
         } else {
             logger.success(`SUCCESS: Login does return accessToken`);
         }
@@ -111,12 +113,12 @@ export default async () => {
         const refreshToken = response.headers.get('set-cookie').split(';')[0].split('=')[1];
 
         if (refreshToken === undefined) {
-            logger.error(`FAILED: Login does return refreshToken`, response);
+            logger.error(`FAILED: Login does not return refreshToken`, response);
         } else {
             logger.success(`SUCCESS: Login does return refreshToken`);
         }
     }
 
     await cleanTestData();
-    logger.finishTest('login');
+    logger.finishTest(TESTS_NAME);
 };

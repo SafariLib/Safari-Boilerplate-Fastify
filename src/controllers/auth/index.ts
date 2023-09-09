@@ -58,4 +58,10 @@ export default async (fastify: FastifyInstance) => {
             }
         },
     });
+
+    fastify.route({
+        method: 'GET',
+        url: '/auth/logout/user',
+        handler: async (request: Request, reply: Reply) => {},
+    });
 };

@@ -24,6 +24,58 @@ export const CUTOMERS = ['test_customer'].map(username => ({
     password: PASSWORD,
 }));
 
+export const getUserConnectionLogs = async email => {
+    const prisma = new PrismaClient();
+    await prisma.$connect();
+
+    try {
+        const { id } = await prisma.user.findUnique({
+            where: {
+                email,
+            },
+            select: {
+                id: true,
+            },
+        });
+
+        return await prisma.userConnectionLog.findMany({
+            where: {
+                user_id: id,
+            },
+        });
+    } catch (e) {
+        throw e;
+    } finally {
+        await prisma.$disconnect();
+    }
+};
+
+export const getCustomerConnectionLogs = async email => {
+    const prisma = new PrismaClient();
+    await prisma.$connect();
+
+    try {
+        const { id } = await prisma.customer.findUnique({
+            where: {
+                email,
+            },
+            select: {
+                id: true,
+            },
+        });
+
+        return await prisma.customerConnectionLog.findMany({
+            where: {
+                customer_id: id,
+            },
+        });
+    } catch (e) {
+        throw e;
+    } finally {
+        await prisma.$disconnect();
+    }
+};
+
 export const createTestData = async () => {
     const prisma = new PrismaClient();
     await prisma.$connect();

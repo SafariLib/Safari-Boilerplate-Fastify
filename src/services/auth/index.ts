@@ -55,8 +55,7 @@ export default plugin((async (fastify, opts, done) => {
     };
 
     const logUserConnection: LogUserConnection = async (user_id, ip, user_agent) => {
-        const { prisma } = fastify;
-        await prisma.userConnectionLog.create({
+        await fastify.prisma.userConnectionLog.create({
             data: {
                 ip,
                 user_agent,
@@ -66,8 +65,7 @@ export default plugin((async (fastify, opts, done) => {
     };
 
     const logCustomerConnection: LogUserConnection = async (user_id, ip, user_agent) => {
-        const { prisma } = fastify;
-        await prisma.customerConnectionLog.create({
+        await fastify.prisma.customerConnectionLog.create({
             data: {
                 ip,
                 user_agent,

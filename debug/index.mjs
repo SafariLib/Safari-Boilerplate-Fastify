@@ -1,3 +1,4 @@
+import testConnectionLogs from './tests/auth/test.log.mjs';
 import testLogin from './tests/auth/test.login.mjs';
 
 (async () => {
@@ -6,5 +7,9 @@ import testLogin from './tests/auth/test.login.mjs';
     //     password: 'P@ssword123!',
     // });
 
+    // -----------------------------
+    //          AUTH TESTS
+    // -----------------------------
     await testLogin();
+    await testConnectionLogs();
 })();
