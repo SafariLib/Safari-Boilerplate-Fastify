@@ -1,137 +1,159 @@
-import { Customer, User } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { TokenContent } from '@types';
 import { retry } from '@utils';
 import { randomUUID } from 'crypto';
 import type { FastifyPluginCallback } from 'fastify';
 import plugin from 'fastify-plugin';
-import { LogUser, VerifyCredentials } from './types';
+import { AuthService, ConnectedUser, LogUser } from './types';
 
 declare module 'fastify' {
     interface FastifyInstance {
-        authService: {
-            logUser: LogUser<User>;
-            logCustomer: LogUser<Customer>;
-            verifyUserCredentials: VerifyCredentials<User>;
-            verifyCustomerCredentials: VerifyCredentials<Customer>;
-        };
+        authService: AuthService;
     }
 }
 
 export default plugin((async (fastify, opts, done) => {
     if (fastify.hasDecorator('authService')) return fastify.log.warn('authService already registered');
 
-    const verifyUserCredentials: VerifyCredentials<Customer> = async ({ username, password }) => {
-        const { prisma } = fastify;
-        const user = await prisma.user.findUnique({ where: { username } });
-        return await verifyCredentials(user, password);
+    const login: LogUser = async (username, password, ip, userAgent, entity = 'USER') => {
+        const user = await getConnectedUser(username, entity);
+        const { tokenContent } = await verifyCredentials(user, password);
+        const { refreshToken, accessToken } = await generateTokens(tokenContent, ip, userAgent, entity);
+        return { user, refreshToken, accessToken };
     };
 
-    const verifyCustomerCredentials: VerifyCredentials<User> = async ({ username, password }) => {
-        const { prisma } = fastify;
-        const customer = await prisma.customer.findUnique({ where: { username } });
-        return await verifyCredentials(customer, password);
-    };
-
-    const logUser: LogUser<User> = async (username, password, ip, userAgent) => {
-        const { user, tokenContent } = await verifyUserCredentials({ username, password });
-        return retry(async () => {
-            const { refreshToken, accessToken } = await generateTokens(tokenContent);
-            await fastify.jsonWebToken.cacheUserRefreshToken(refreshToken, user.id, ip, userAgent);
-            return { user, refreshToken, accessToken };
-        }, 2);
-    };
-
-    const logCustomer: LogUser<Customer> = async (username, password, ip, userAgent) => {
-        const { user, tokenContent } = await verifyCustomerCredentials({ username, password });
-        return retry(async () => {
-            const { refreshToken, accessToken } = await generateTokens(tokenContent);
-            await fastify.jsonWebToken.cacheCustomerRefreshToken(refreshToken, user.id, ip, userAgent);
-            return { user, refreshToken, accessToken };
-        }, 2);
-    };
-
-    interface RefreshQueryResult {
-        userId: number;
-        username: string;
-        userRole: number;
-        revoked: boolean;
-        lastUserAgent: string;
-        lastIp: string;
-    }
-    const refreshUserToken = async (refreshToken: string, ip: string, userAgent: string) => {
-        const { prisma, jsonWebToken } = fastify;
-
-        const { userId, username, userRole, revoked, lastUserAgent, lastIp } = await prisma.$queryRaw<{
-            userId: number;
-            username: string;
-            userRole: number;
-            revoked: boolean;
-            lastUserAgent: string;
-            lastIp: string;
-        }>`
-            SELECT
-                U.id AS userId,
-                U.username,
-                U.role AS userRole,
-                U.revoked,
-                R.user_agent AS lastUserAgent,
-                R.ip AS lastIp
-            FROM User AS U
-            LEFT JOIN
-            (
-                SELECT user_id, user_agent, ip
-                FROM UserRefreshTokenCache
-                WHERE refresh_token = ${refreshToken}
-            ) AS R ON U.id = R.user_id;
+    const revokeToken = async (token: string, entity: 'USER' | 'CUSTOMER' = 'USER') => {
+        await fastify.prisma.$executeRaw`
+            UPDATE ${entity === 'USER' ? Prisma.sql`"UserRefreshTokenCache"` : Prisma.sql`"CustomerRefreshTokenCache"`}
+            SET revoked = true
+            WHERE token = ${token};
         `;
-
-        if (revoked) {
-            throw { errorCode: 'USER_TOKEN_REVOKED', status: 401 };
-        } else if (lastUserAgent !== userAgent) {
-            throw { errorCode: 'USER_TOKEN_USER_AGENT_MISMATCH', status: 401 };
-        } else if (lastIp !== ip) {
-            throw { errorCode: 'USER_TOKEN_IP_MISMATCH', status: 401 };
-        }
     };
 
-    const generateTokens = async (tokenContent: TokenContent) => {
-        const { signAccessToken, signRefreshToken } = fastify.jsonWebToken;
-        const uuid = randomUUID();
-        const accessToken = signAccessToken(tokenContent);
-        const refreshToken = signRefreshToken({ ...tokenContent, uuid });
-        return { refreshToken, accessToken };
+    const revokeUser = async (userId: number, entity: 'USER' | 'CUSTOMER') => {
+        await fastify.prisma.$executeRaw`
+            UPDATE ${entity === 'USER' ? Prisma.sql`"User"` : Prisma.sql`"Customer"`}
+            SET revoked = true
+            WHERE id = ${userId};
+        `;
     };
 
-    const verifyCredentials = async (entity: Customer | User, password: string) => {
+    // interface RefreshQueryResult {
+    //     userId: number;
+    //     username: string;
+    //     userRole: number;
+    //     revoked: boolean;
+    //     lastUserAgent: string;
+    //     lastIp: string;
+    // }
+    // const refreshUserToken = async (refreshToken: string, ip: string, userAgent: string) => {
+    //     const { prisma, jsonWebToken } = fastify;
+    //     const { userId, username, userRole, revoked, lastUserAgent, lastIp } = await prisma.$queryRaw<{
+    //         userId: number;
+    //         username: string;
+    //         userRole: number;
+    //         revoked: boolean;
+    //         lastUserAgent: string;
+    //         lastIp: string;
+    //     }>`
+    //         SELECT
+    //             U.id AS userId,
+    //             U.username,
+    //             U.role AS userRole,
+    //             U.revoked,
+    //             R.user_agent AS lastUserAgent,
+    //             R.ip AS lastIp
+    //         FROM User AS U
+    //         LEFT JOIN
+    //         (
+    //             SELECT user_id, user_agent, ip
+    //             FROM UserRefreshTokenCache
+    //             WHERE refresh_token = ${refreshToken}
+    //         ) AS R ON U.id = R.user_id;
+    //     `;
+
+    //     if (revoked) {
+    //         throw { errorCode: 'USER_TOKEN_REVOKED', status: 401 };
+    //     } else if (lastUserAgent !== userAgent) {
+    //         throw { errorCode: 'USER_TOKEN_USER_AGENT_MISMATCH', status: 401 };
+    //     } else if (lastIp !== ip) {
+    //         throw { errorCode: 'USER_TOKEN_IP_MISMATCH', status: 401 };
+    //     }
+    // };
+
+    const generateTokens = async (
+        tokenContent: TokenContent,
+        ip: string,
+        userAgent: string,
+        entity: 'USER' | 'CUSTOMER' = 'USER',
+    ) => {
+        return retry(async () => {
+            const { signAccessToken, signRefreshToken, refreshSignOpts } = fastify.jsonWebToken;
+            const uuid = randomUUID();
+            const accessToken = signAccessToken(tokenContent);
+            const refreshToken = signRefreshToken({ ...tokenContent, uuid });
+            await cacheToken(refreshToken, tokenContent.id, ip, userAgent, entity);
+            return { refreshToken, accessToken };
+        }, 2);
+    };
+
+    const verifyCredentials = async (user: ConnectedUser, password: string) => {
         const { bcrypt } = fastify;
+        const passwordMatch = await bcrypt.compareStrings(password, user.password);
 
-        if (!entity) {
-            throw { errorCode: 'USER_NOT_FOUND', status: 404 };
-        }
-        if (entity.revoked) {
-            throw { errorCode: 'USER_REVOKED', status: 401 };
-        }
-        if (!(await bcrypt.compareStrings(password, entity.password))) {
-            throw { errorCode: 'USER_INCORRECT_PASSWORD', status: 401 };
-        }
+        if (user.revoked) throw { errorCode: 'USER_REVOKED', status: 401 };
+        if (!passwordMatch) throw { errorCode: 'USER_INCORRECT_PASSWORD', status: 401 };
 
-        delete entity.password;
+        delete user.password;
 
         return {
             tokenContent: {
-                id: entity.id,
-                username: entity.username,
-                role: entity?.role,
+                id: user.id,
+                username: user.username,
+                role: user?.role,
             },
-            user: entity,
+            user: user,
         };
     };
 
+    const getConnectedUser = async (username: string, entity: 'USER' | 'CUSTOMER'): Promise<ConnectedUser> => {
+        const user = (
+            await fastify.prisma.$queryRaw<Array<ConnectedUser>>`
+            SELECT * FROM ${entity === 'USER' ? Prisma.sql`"User"` : Prisma.sql`"Customer"`}
+            WHERE username = ${username};
+        `
+        )[0];
+        if (!user) throw { errorCode: 'USER_NOT_FOUND', status: 404 };
+        return user;
+    };
+
+    const cacheToken = async (
+        token: string,
+        userId: number,
+        ip: string,
+        userAgent: string,
+        entity: 'USER' | 'CUSTOMER' = 'USER',
+    ) => {
+        const { refreshSignOpts } = fastify.jsonWebToken;
+        const table = entity === 'USER' ? Prisma.sql`"UserRefreshTokenCache"` : Prisma.sql`"CustomerRefreshTokenCache"`;
+        const idColumn = entity === 'USER' ? Prisma.sql`user_id` : Prisma.sql`customer_id`;
+        const expirationDate = new Date(Date.now() + Number(refreshSignOpts.expiresIn));
+
+        await fastify.prisma.$executeRaw`
+            INSERT INTO ${table}
+                (${idColumn}, token, ip, user_agent, expires_at)
+            VALUES (${userId}, ${token}, ${ip}, ${userAgent}, ${expirationDate});
+        `;
+    };
+
     fastify.decorate('authService', {
-        logUser,
-        logCustomer,
-        verifyUserCredentials,
-        verifyCustomerCredentials,
+        logUser: async (username, password, ip, userAgent) => await login(username, password, ip, userAgent, 'USER'),
+        logCustomer: async (username, password, ip, userAgent) =>
+            await login(username, password, ip, userAgent, 'CUSTOMER'),
+        revokeUserToken: async token => await revokeToken(token, 'USER'),
+        revokeCustomerToken: async token => await revokeToken(token, 'CUSTOMER'),
+        revokeUser: async userId => await revokeUser(userId, 'USER'),
+        revokeCustomer: async customerId => await revokeUser(customerId, 'CUSTOMER'),
     });
     done();
 }) as FastifyPluginCallback);

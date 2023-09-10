@@ -3,14 +3,7 @@ import type { Token } from '@types';
 import type { FastifyPluginCallback } from 'fastify';
 import plugin from 'fastify-plugin';
 import jsonwebtoken, { Algorithm, SignOptions, VerifyOptions } from 'jsonwebtoken';
-import type {
-    CacheCustomerRefreshToken,
-    CacheUserRefreshToken,
-    JsonWebToken,
-    SignAccessToken,
-    SignRefreshToken,
-    VerifyToken,
-} from './types';
+import type { JsonWebToken, SignAccessToken, SignRefreshToken, VerifyToken } from './types';
 
 declare module 'fastify' {
     interface FastifyInstance {
@@ -75,64 +68,13 @@ export default plugin((async (fastify, opts, done) => {
         }
     };
 
-    const cacheUserRefreshToken: CacheUserRefreshToken = async (
-        token: string,
-        userId: number,
-        ip: string,
-        userAgent: string,
-    ) => {
-        await fastify.prisma.userRefreshTokenCache.create({
-            data: {
-                user_id: userId,
-                token,
-                ip,
-                user_agent: userAgent,
-                expires_at: new Date(Date.now() + refreshExpiresIn),
-            },
-        });
-    };
-
-    const cacheCustomerRefreshToken: CacheCustomerRefreshToken = async (
-        token: string,
-        customerId: number,
-        ip: string,
-        userAgent: string,
-    ) => {
-        await fastify.prisma.customerRefreshTokenCache.create({
-            data: {
-                customer_id: customerId,
-                token,
-                ip,
-                user_agent: userAgent,
-                expires_at: new Date(Date.now() + refreshExpiresIn),
-            },
-        });
-    };
-
-    const revokeUserRefreshToken = async (token: string) => {
-        await fastify.prisma.userRefreshTokenCache.update({
-            where: { token: token },
-            data: { revoked: true },
-        });
-    };
-
-    const revokeCustomerRefreshToken = async (token: string) => {
-        await fastify.prisma.customerRefreshTokenCache.update({
-            where: { token: token },
-            data: { revoked: true },
-        });
-    };
-
     fastify.decorate('jsonWebToken', {
         signAccessToken,
         signRefreshToken,
         verifyAccessToken: (token: string) => verifyToken(token, jwtVerifyOptions),
         verifyRefreshToken: (token: string) => verifyToken(token, jwtRefreshVerifyOpts),
-        cacheUserRefreshToken,
-        cacheCustomerRefreshToken,
-        revokeUserRefreshToken,
-        revokeCustomerRefreshToken,
         cookieOpts,
+        refreshSignOpts: jwtRefreshSignOpts,
         tokens,
     });
     done();
