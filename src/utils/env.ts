@@ -1,4 +1,12 @@
-const environmentVariables = ['NODE_ENV', 'POSTGRES_URI', 'SECRET_COOKIE', 'SECRET_JWT', 'SERVER_PORT'];
+const environmentVariables = [
+    'NODE_ENV', 
+    'POSTGRES_URI', 
+    'SECRET_COOKIE', 
+    'SECRET_JWT', 
+    'SERVER_PORT', 
+    'REDIS_URL',
+    'REDIS_PORT'
+];
 
 export const envCheck = () => {
     console.log();

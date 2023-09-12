@@ -13,7 +13,7 @@ declare module 'fastify' {
 }
 
 export default plugin((async (fastify, opts, done) => {
-    if (fastify.hasDecorator('authService')) return fastify.log.warn('authService already registered');
+    if (fastify.hasDecorator('authService')) return done();
 
     const login: LogUser = async (username, password, ip, userAgent, entity = 'USER') => {
         const user = await getUser(username, entity);
@@ -89,14 +89,25 @@ export default plugin((async (fastify, opts, done) => {
     ) => {
         return retry(async () => {
             const { signAccessToken, signRefreshToken } = fastify.jsonWebToken;
+            const secret = await getOrCreateCachedSecret(tokenContent.id, entity);
             const uuid = randomUUID();
-            const accessToken = signAccessToken(tokenContent);
+
+            // TODO: Ensure that the token verification uses the same secret as the one used to sign the token
+            const accessToken = signAccessToken(tokenContent, secret);
             const refreshToken = signRefreshToken({ ...tokenContent, uuid });
             await cacheRefreshToken(refreshToken, tokenContent.id, ip, userAgent, entity);
             return { refreshToken, accessToken };
         }, 2);
     };
 
+    /**
+     * Check if the user exists and if the password is correct
+     * @param user The user to check
+     * @param password The password to check
+     * @returns The user and the token content
+     * @throws USER_INCORRECT_PASSWORD
+     * @throws USER_REVOKED
+     */
     const verifyCredentials = async (user: UserToConnect, password: string) => {
         const { bcrypt } = fastify;
         const passwordMatch = await bcrypt.compareStrings(password, user.password);
@@ -141,6 +152,36 @@ export default plugin((async (fastify, opts, done) => {
         return user[0];
     };
 
+    /**
+     * Get or create a cached secret for a user (redis)
+     * @param userId The user id
+     * @param entity The entity type
+     * @returns The secret
+     */
+    const getOrCreateCachedSecret = async (userId: number, entity: 'USER' | 'CUSTOMER') => {
+        const { getUserSecret, setUserSecret, getCustomerSecret, setCustomerSecret } = fastify.cacheService;
+        let secret: string;
+
+        if (entity === 'USER') secret = await getUserSecret(userId);
+        else if (entity === 'CUSTOMER') secret = await getCustomerSecret(userId);
+
+        if (!secret) secret = randomUUID();
+
+        if (entity === 'USER') await setUserSecret(userId, secret);
+        else if (entity === 'CUSTOMER') await setCustomerSecret(userId, secret);
+
+        return secret;
+    };
+
+    /**
+     * Cache the refresh token in database
+     * @param token The refresh token to cache
+     * @param userId The user id
+     * @param ip The user ip
+     * @param userAgent The user agent
+     * @param entity The entity type
+     * @returns The cached refresh token
+     */
     const cacheRefreshToken = async (
         token: string,
         userId: number,

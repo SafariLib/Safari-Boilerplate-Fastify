@@ -19,6 +19,7 @@ export const registerPlugins = async (fastify: FastifyInstance) => {
 
     [
         import('@plugins/dbConnector'),
+        import('@plugins/fastifyRedis'),
         import('@plugins/fastifyCookie'),
         import('@plugins/fastifyRateLimit'),
         import('@plugins/jsonWebToken'),
@@ -26,7 +27,7 @@ export const registerPlugins = async (fastify: FastifyInstance) => {
         import('@plugins/fastifySwagger'),
     ].forEach(plugin => fastify.register(plugin));
 
-    [import('@services/auth')].forEach(service => fastify.register(service));
+    [import('@services/cache'), import('@services/auth')].forEach(service => fastify.register(service));
 
     [import('@controllers/debug'), import('@controllers/auth'), import('@controllers/user')].forEach(controller =>
         fastify.register(controller),
