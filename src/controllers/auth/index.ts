@@ -61,6 +61,31 @@ export default async (fastify: FastifyInstance) => {
     fastify.route({
         method: 'GET',
         url: '/auth/logout/user',
-        handler: async (request: Request, reply: Reply) => {},
+        handler: async (request: Request, reply: Reply) => {
+            const { authService } = fastify;
+
+            // TODO: Add caching solution for AccessToken revocation
+            try {
+                await authService.revokeUserRefreshToken(request.cookies.refreshToken);
+                reply.code(200).clearCookie('refreshToken').send();
+            } catch (e) {
+                reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
+            }
+        },
+    });
+
+    fastify.route({
+        method: 'GET',
+        url: '/auth/logout/customer',
+        handler: async (request: Request, reply: Reply) => {
+            const { authService } = fastify;
+
+            try {
+                await authService.revokeCustomerRefreshToken(request.cookies.refreshToken);
+                reply.code(200).clearCookie('refreshToken').send();
+            } catch (e) {
+                reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
+            }
+        },
     });
 };

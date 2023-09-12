@@ -1,4 +1,4 @@
-export interface ConnectedUser {
+export interface UserToConnect {
     id: number;
     username: string;
     email: string;
@@ -9,6 +9,8 @@ export interface ConnectedUser {
     created_at: Date;
 }
 
+export type LogedUser = Omit<UserToConnect, 'password'>;
+
 export type LogUser = (
     username: string,
     password: string,
@@ -16,20 +18,24 @@ export type LogUser = (
     userAgent: string,
     entity?: 'USER' | 'CUSTOMER',
 ) => Promise<{
-    user: Omit<ConnectedUser, 'password'>;
+    user: Omit<UserToConnect, 'password'>;
     refreshToken: string;
     accessToken: string;
 }>;
 
-export type RevokeToken = (token: string) => Promise<void>;
+export type GetUserFromToken = () => Promise<LogedUser>;
+
+export type RevokeRefreshToken = (token: string) => Promise<void>;
 
 export type RevokeUser = (userId: number, entity: 'USER' | 'CUSTOMER') => Promise<void>;
 
 export interface AuthService {
+    getConnectedUser: GetUserFromToken;
+    getConnectedCustomer: GetUserFromToken;
     logUser: LogUser;
     logCustomer: LogUser;
-    revokeUserToken: RevokeToken;
-    revokeCustomerToken: RevokeToken;
+    revokeUserRefreshToken: RevokeRefreshToken;
+    revokeCustomerRefreshToken: RevokeRefreshToken;
     revokeUser: RevokeUser;
     revokeCustomer: RevokeUser;
 }

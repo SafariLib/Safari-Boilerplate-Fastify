@@ -3,7 +3,7 @@ import type { Token } from '@types';
 import type { FastifyPluginCallback } from 'fastify';
 import plugin from 'fastify-plugin';
 import jsonwebtoken, { Algorithm, SignOptions, VerifyOptions } from 'jsonwebtoken';
-import type { JsonWebToken, SignAccessToken, SignRefreshToken, VerifyToken } from './types';
+import type { GetAccessToken, JsonWebToken, SignAccessToken, SignRefreshToken, VerifyToken } from './types';
 
 declare module 'fastify' {
     interface FastifyInstance {
@@ -56,8 +56,8 @@ export default plugin((async (fastify, opts, done) => {
     const signRefreshToken: SignRefreshToken = payload =>
         jsonwebtoken.sign(payload, process.env.SECRET_JWT, jwtRefreshSignOpts);
 
-    const verifyToken: VerifyToken = (token, verifyOpts) => {
-        const decoded = jsonwebtoken.verify(token, process.env.SECRET_JWT, verifyOpts) as Token;
+    const verifyToken: VerifyToken = (token, verifyOpts, secret) => {
+        const decoded = jsonwebtoken.verify(token, secret ?? process.env.SECRET_JWT, verifyOpts) as Token;
 
         if (!decoded || typeof decoded !== 'object') {
             throw { errorCode: 'AUTH_TOKEN_INVALID', status: 401 };
@@ -68,10 +68,17 @@ export default plugin((async (fastify, opts, done) => {
         }
     };
 
+    const getAccessToken: GetAccessToken = request => {
+        const { authorization } = request.headers;
+        if (!authorization) throw { errorCode: 'AUTH_HEADERS_EMPTY', status: 401 };
+        return (authorization as string).split(' ')[1];
+    };
+
     fastify.decorate('jsonWebToken', {
+        getAccessToken,
         signAccessToken,
         signRefreshToken,
-        verifyAccessToken: (token: string) => verifyToken(token, jwtVerifyOptions),
+        verifyAccessToken: (token: string, userSecret?: string) => verifyToken(token, jwtVerifyOptions),
         verifyRefreshToken: (token: string) => verifyToken(token, jwtRefreshVerifyOpts),
         cookieOpts,
         refreshSignOpts: jwtRefreshSignOpts,
