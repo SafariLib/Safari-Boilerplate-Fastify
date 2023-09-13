@@ -14,6 +14,11 @@ declare module 'fastify' {
 /**
  * @package jsonwebtoken
  * @see https://github.com/auth0/node-jsonwebtoken
+ *
+ * - HS256: HMAC using SHA-256 hash algorithm (default)
+ * - Secret:
+ *  - Private global secret key for signing Refresh JWT
+ *  - Private per user secret key for signing Access JWT (stored in Redis)
  */
 export default plugin((async (fastify, opts, done) => {
     if (fastify.hasDecorator('jsonWebToken')) return done();

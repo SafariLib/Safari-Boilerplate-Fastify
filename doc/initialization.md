@@ -1,6 +1,7 @@
 # Initialization
 
-Use the [Dockerfile.dev](../Dockerfile.dev) to enhance container's configuration.
+-   Update `package.json` **docker** scripts with customized network, volumes and image names.
+-   Use the [Dockerfile.dev](../Dockerfile.dev) to enhance container's configuration.
 
 ## Set enviroment variables
 
@@ -14,6 +15,8 @@ The following variables must be set in a _.env_ file and/or in the corresponding
 | `SECRET_COOKIE` | The secret used to generate the cookie used for authentication. | `string` |
 | `SECRET_JWT` | The secret used to generate the JWT tokens used for authentication. | `string` |
 | `SERVER_PORT` | The port on which the application will listen for requests. | `number` |
+| `REDIS_URL` | The Redis (cache) connection string. | `number` |
+| `REDIS_PORT` | The Redis (cache) port. | `number` |
 
 ## Install dependencies
 

@@ -2,22 +2,17 @@ import { FastifyRedisPluginOptions } from '@fastify/redis';
 import type { FastifyPluginCallback } from 'fastify';
 import plugin from 'fastify-plugin';
 
-// declare module 'fastify' {
-//     interface FastifyInstance {
-//         redis: PrismaClient;
-//     }
-// }
-
 /**
- * @package PrismaClient
+ * @package Fastify/redis - Redis connector
  * @see https://github.com/fastify/fastify-redis#readme
  */
 export default plugin((async (fastify, opts, done) => {
     if (fastify.hasDecorator('redis')) return done();
 
     const baseOpts: FastifyRedisPluginOptions = {
-        url: process.env.REDIS_URL,
+        url: process.env.REDIS_HOST,
         port: Number(process.env.REDIS_PORT),
+        closeClient: true,
     };
 
     fastify.register(import('@fastify/redis'), {

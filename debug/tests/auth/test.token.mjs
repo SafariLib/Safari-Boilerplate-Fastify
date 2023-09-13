@@ -55,6 +55,14 @@ export default async () => {
     }
 
     {
+        /*
+            Login with multiple devices should generate multiple tokens with the signature
+        */
+
+        await apiCaller.POST('/auth/login/user', {
+            username: testUsers[0].username,
+            password: PASSWORD,
+        });
         // const loginResponse = await apiCaller.POST('/auth/login/user', {
         //     username: testUsers[0].username,
         //     password: PASSWORD,

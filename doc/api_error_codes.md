@@ -8,4 +8,5 @@ List of all API error codes.
 | `USER_INCORRECT_PASSWORD` | User connection failed as provided password does not match. |
 | `AUTH_HEADERS_EMPTY` | Request authorization headers are empty. |
 | `AUTH_TOKEN_EXPIRED` | Bearer token is expired. |
+| `AUTH_TOKEN_REVOKED` | Bearer token is revoked. |
 | `AUTH_TOKEN_INVALID` | Bearer token is malformed. |

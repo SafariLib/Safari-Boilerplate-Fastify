@@ -12,7 +12,6 @@ export default async (fastify: FastifyInstance) => {
             const { headers, ip } = request;
             const { password, username } = request.body;
             const userAgent = headers['user-agent'];
-
             try {
                 const { user, refreshToken, accessToken } = await authService.logUser(
                     username,
@@ -39,7 +38,6 @@ export default async (fastify: FastifyInstance) => {
             const { headers, ip } = request;
             const { password, username } = request.body;
             const userAgent = headers['user-agent'];
-
             try {
                 const { user, refreshToken, accessToken } = await authService.logCustomer(
                     username,
@@ -62,11 +60,11 @@ export default async (fastify: FastifyInstance) => {
         method: 'GET',
         url: '/auth/logout/user',
         handler: async (request: Request, reply: Reply) => {
-            const { authService } = fastify;
-
-            // TODO: Add caching solution for AccessToken revocation
+            const { authService, cacheService, jsonWebToken } = fastify;
             try {
+                const accessTokenString = jsonWebToken.getAccessToken(request);
                 await authService.revokeUserRefreshToken(request.cookies.refreshToken);
+                await cacheService.setUserTokenBlacklist(accessTokenString);
                 reply.code(200).clearCookie('refreshToken').send();
             } catch (e) {
                 reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
@@ -78,10 +76,41 @@ export default async (fastify: FastifyInstance) => {
         method: 'GET',
         url: '/auth/logout/customer',
         handler: async (request: Request, reply: Reply) => {
-            const { authService } = fastify;
+            const { authService, cacheService, jsonWebToken } = fastify;
+            try {
+                const accessTokenString = jsonWebToken.getAccessToken(request);
+                await authService.revokeCustomerRefreshToken(request.cookies.refreshToken);
+                await cacheService.setCustomerTokenBlacklist(accessTokenString);
+                reply.code(200).clearCookie('refreshToken').send();
+            } catch (e) {
+                reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
+            }
+        },
+    });
 
+    fastify.route({
+        method: 'GET',
+        url: '/auth/logout/user/all',
+        handler: async (request: Request, reply: Reply) => {
+            const { authService, cacheService, jsonWebToken } = fastify;
+            try {
+                await authService.revokeUserRefreshToken(request.cookies.refreshToken);
+                await cacheService.deleteUserSecret(jsonWebToken.tokens.access.id);
+                reply.code(200).clearCookie('refreshToken').send();
+            } catch (e) {
+                reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
+            }
+        },
+    });
+
+    fastify.route({
+        method: 'GET',
+        url: '/auth/logout/customer/all',
+        handler: async (request: Request, reply: Reply) => {
+            const { authService, cacheService, jsonWebToken } = fastify;
             try {
                 await authService.revokeCustomerRefreshToken(request.cookies.refreshToken);
+                await cacheService.deleteCustomerSecret(jsonWebToken.tokens.access.id);
                 reply.code(200).clearCookie('refreshToken').send();
             } catch (e) {
                 reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
