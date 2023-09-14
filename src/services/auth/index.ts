@@ -91,9 +91,7 @@ export default plugin((async (fastify, opts, done) => {
             const { signAccessToken, signRefreshToken } = fastify.jsonWebToken;
             const secret = await getOrCreateCachedSecret(tokenContent.id, entity);
             const uuid = randomUUID();
-
-            // TODO: Ensure that the token verification uses the same secret as the one used to sign the token
-            const accessToken = signAccessToken(tokenContent, secret);
+            const accessToken = signAccessToken({ ...tokenContent, uuid }, secret);
             const refreshToken = signRefreshToken({ ...tokenContent, uuid });
             await cacheRefreshToken(refreshToken, tokenContent.id, ip, userAgent, entity);
             return { refreshToken, accessToken };

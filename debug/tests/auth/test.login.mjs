@@ -1,4 +1,4 @@
-import apiCaller from '../../utils/apiCaller.mjs';
+import ApiCaller from '../../utils/ApiCaller.mjs';
 import logger from '../../utils/logger.mjs';
 import { PASSWORD, cleanTestData, initData } from './utils.mjs';
 
@@ -7,6 +7,7 @@ const TESTS_NAME = 'login';
 export default async () => {
     logger.startTest(TESTS_NAME);
     const { testUsers, testCustomers } = await initData();
+    const API = new ApiCaller();
 
     {
         /*
@@ -14,7 +15,7 @@ export default async () => {
         */
 
         for (const user of testUsers) {
-            const response = await apiCaller.POST('/auth/login/user', {
+            const response = await API.POST('/auth/login/user', {
                 username: user.username,
                 password: PASSWORD,
             });
@@ -26,7 +27,7 @@ export default async () => {
             }
         }
         for (const customer of testCustomers) {
-            const response = await apiCaller.POST('/auth/login/customer', {
+            const response = await API.POST('/auth/login/customer', {
                 username: customer.username,
                 password: PASSWORD,
             });
@@ -45,7 +46,7 @@ export default async () => {
         */
 
         for (const user of testUsers) {
-            const response = await apiCaller.POST('/auth/login/user', {
+            const response = await API.POST('/auth/login/user', {
                 username: user.username,
                 password: 'wrong password',
             });
@@ -57,7 +58,7 @@ export default async () => {
             }
         }
         for (const customer of testCustomers) {
-            const response = await apiCaller.POST('/auth/login/customer', {
+            const response = await API.POST('/auth/login/customer', {
                 username: customer.username,
                 password: 'wrong password',
             });
@@ -69,7 +70,7 @@ export default async () => {
             }
         }
         for (const user of testUsers) {
-            const response = await apiCaller.POST('/auth/login/user', {
+            const response = await API.POST('/auth/login/user', {
                 username:
                     'wrongUsernameThatIsTooLong_____IMeanReallyTooLongLikeSoLongItCanTouchTheSky____EvenLongerThanThat',
                 password: PASSWORD,
@@ -88,7 +89,7 @@ export default async () => {
             Login should return user object and tokens
         */
 
-        const userResponse = await apiCaller.POST('/auth/login/user', {
+        const userResponse = await API.POST('/auth/login/user', {
             username: testUsers[0].username,
             password: PASSWORD,
         });
@@ -117,7 +118,7 @@ export default async () => {
 
         // For customer
 
-        const customerResponse = await apiCaller.POST('/auth/login/customer', {
+        const customerResponse = await API.POST('/auth/login/customer', {
             username: testCustomers[0].username,
             password: PASSWORD,
         });
