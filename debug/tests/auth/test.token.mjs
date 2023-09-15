@@ -134,7 +134,7 @@ export default async () => {
         client_4.setCookieToken(refreshToken_4);
         client_4.setBearerToken(accessToken_4);
 
-        // Logout client_1 once to revoke accessToken
+        // Logout client_1 & client_3 once to revoke accessToken
         // Second logout to test token revokation as it is a protected route
         await client_1.GET('/auth/logout/user');
         const res_1_logout = await client_1.GET('/auth/logout/user');
@@ -150,6 +150,71 @@ export default async () => {
             logger.error(`FAILED: Logout customer by revoking accessToken with success`, res);
         } else {
             logger.success(`SUCCESS: Logout customer by revoking accessToken with success`);
+        }
+
+        // Re-login client_1 & client_3
+        // Disconnect all clients with logout/all
+        const res_1_login = await client_1.POST('/auth/login/user', {
+            username: testUsers[0].username,
+            password: PASSWORD,
+        });
+        const res_3_login = await client_3.POST('/auth/login/customer', {
+            username: testCustomers[0].username,
+            password: PASSWORD,
+        });
+
+        const tokens = {
+            user: {
+                refreshToken: res_1_login.headers.get('set-cookie').split(';')[0].split('=')[1],
+                accessToken: (await res_1_login.json()).accessToken,
+            },
+            customer: {
+                refreshToken: res_3_login.headers.get('set-cookie').split(';')[0].split('=')[1],
+                accessToken: (await res_3_login.json()).accessToken,
+            },
+        };
+
+        client_1.setCookieToken(tokens.user.refreshToken);
+        client_1.setBearerToken(tokens.user.accessToken);
+        client_3.setCookieToken(tokens.user.refreshToken);
+        client_3.setBearerToken(tokens.user.accessToken);
+
+        const res_user_logout_all = await client_1.GET('/auth/logout/user/all');
+        const res_customer_logout_all = await client_3.GET('/auth/logout/customer/all');
+
+        if (res_user_logout_all.status !== 200) {
+            logger.error(`FAILED: Called loagout/user/all route with success`, res_user_logout_all);
+        } else {
+            logger.success(`SUCCESS: Called loagout/user/all route with success`);
+        }
+        if (res_customer_logout_all.status !== 200) {
+            logger.error(`FAILED: Called loagout/customer/all route with success`, res_customer_logout_all);
+        } else {
+            logger.success(`SUCCESS: Called loagout/customer/all route with success`);
+        }
+
+        // Try to access protected route with revoked token with all clients
+        const res_user_1_protected_route = await client_1.GET('/auth/logout/user');
+        const res_user_2_protected_route = await client_2.GET('/auth/logout/user');
+        const res_customer_1_protected_route = await client_3.GET('/auth/logout/customer');
+        const res_customer_2_protected_route = await client_4.GET('/auth/logout/customer');
+
+        const logoutAllCustomerSuccess =
+            res_user_1_protected_route.status === 401 && res_user_2_protected_route.status === 401;
+
+        const logoutAllUserSuccess =
+            res_customer_1_protected_route.status === 401 && res_customer_2_protected_route.status === 401;
+
+        if (logoutAllCustomerSuccess) {
+            logger.error(`FAILED: Logout all customer tokens with success`, res_customer_1_protected_route);
+        } else {
+            logger.success(`SUCCESS: Logout all customer tokens with success`);
+        }
+
+        if (logoutAllUserSuccess) {
+            logger.error(`FAILED: Logout all user tokens with success`, res_user_1_protected_route);
+        } else {
+            logger.success(`SUCCESS: Logout all user tokens with success`);
         }
     }
 
