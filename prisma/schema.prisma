@@ -13,6 +13,22 @@ datasource db {
 // ---------------------------------------------------------
 // ---------------------- USER TABLES ----------------------
 // ---------------------------------------------------------
+model Admin {
+  id         Int       @id @default(autoincrement())
+  username   String    @unique @db.VarChar(32)
+  email      String    @unique @db.VarChar(64)
+  password   String    @db.VarChar(64)
+  avatar_url String?
+  revoked    Boolean   @default(false)
+  role       Int       @default(0)
+  created_at DateTime  @default(now())
+  updated_at DateTime?
+	@@map("Admin")
+}
+
+// -------------------------------------------------------------
+// ---------------------- CUSTOMER TABLES ----------------------
+// -------------------------------------------------------------
 model User {
   id         Int       @id @default(autoincrement())
   username   String    @unique @db.VarChar(32)
@@ -23,55 +39,6 @@ model User {
   role       Int       @default(0)
   created_at DateTime  @default(now())
   updated_at DateTime?
-
-  // Relationship with refresh tokens
-  refreshTokens     UserRefreshTokenCache[]
+	@@map("User")
 }
 
-model UserRefreshTokenCache {
-  id         Int       @id @default(autoincrement())
-  user_id    Int
-  token      String    @unique
-  ip         String
-  user_agent String
-  revoked    Boolean   @default(false)
-  created_at DateTime  @default(now())
-  updated_at DateTime?
-  expires_at DateTime
-
-  // Relationship with user
-  user User @relation(fields: [user_id], references: [id])
-}
-
-// -------------------------------------------------------------
-// ---------------------- CUSTOMER TABLES ----------------------
-// -------------------------------------------------------------
-model Customer {
-  id         Int       @id @default(autoincrement())
-  username   String    @unique @db.VarChar(32)
-  email      String    @unique @db.VarChar(64)
-  password   String    @db.VarChar(64)
-  avatar_url String?
-  revoked    Boolean   @default(false)
-  role       Int       @default(0)
-  created_at DateTime  @default(now())
-  updated_at DateTime?
-
-  // Relationship with refresh tokens
-  refreshTokens         CustomerRefreshTokenCache[]
-}
-
-model CustomerRefreshTokenCache {
-  id          Int       @id @default(autoincrement())
-  customer_id Int
-  token       String    @unique
-  ip          String
-  user_agent  String
-  revoked     Boolean   @default(true)
-  created_at  DateTime  @default(now())
-  updated_at  DateTime?
-  expires_at  DateTime
-
-  // Relationship with customer
-  customer Customer @relation(fields: [customer_id], references: [id])
-}

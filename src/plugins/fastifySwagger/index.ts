@@ -21,7 +21,6 @@ export default plugin((async (fastify, opts, done) => {
             schemes: ['http'],
             consumes: ['application/json', 'multipart/form-data'],
             produces: ['application/json'],
-            tags: [{ name: 'Authentication' }, { name: 'Users and Customers' }],
         },
     });
 

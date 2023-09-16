@@ -13,7 +13,6 @@ The following variables must be set in a _.env_ file and/or in the corresponding
 | `NODE_ENV` | The environment in which the application is running. Can be `development` or `production`. | `string` |
 | `POSTGRES_URI` | The DB connection string. | `string` |
 | `SECRET_COOKIE` | The secret used to generate the cookie used for authentication. | `string` |
-| `SECRET_JWT` | The secret used to generate the JWT tokens used for authentication. | `string` |
 | `SERVER_PORT` | The port on which the application will listen for requests. | `number` |
 | `REDIS_URL` | The Redis (cache) connection string. | `number` |
 | `REDIS_PORT` | The Redis (cache) port. | `number` |

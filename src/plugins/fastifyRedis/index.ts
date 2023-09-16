@@ -21,15 +21,15 @@ export default plugin((async (fastify, opts, done) => {
     });
     fastify.register(import('@fastify/redis'), {
         ...baseOpts,
-        namespace: 'customer_secret',
+        namespace: 'user_token_id',
     });
     fastify.register(import('@fastify/redis'), {
         ...baseOpts,
-        namespace: 'user_token_blacklist',
+        namespace: 'admin_secret',
     });
     fastify.register(import('@fastify/redis'), {
         ...baseOpts,
-        namespace: 'customer_token_blacklist',
+        namespace: 'admin_token_id',
     });
 
     done();

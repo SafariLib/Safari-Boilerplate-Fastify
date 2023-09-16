@@ -28,12 +28,12 @@ const baseColors = {
 
 export default {
     startTest: title => {
-        console.log(`${baseColors.BgGray}${baseColors.FgWhite}`, `Starting ${title} functions tests`, baseColors.Reset);
+        console.log(`${baseColors.BgGray}${baseColors.FgWhite}`, `Starting ${title} tests`, baseColors.Reset);
         console.log();
     },
     finishTest: title => {
         console.log();
-        console.log(baseColors.FgBlue, `Finished ${title} functions tests`, baseColors.Reset);
+        console.log(baseColors.FgBlue, `Finished ${title} tests`, baseColors.Reset);
         console.log();
     },
     error: (title, message) => {

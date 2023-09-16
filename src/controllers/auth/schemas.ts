@@ -29,10 +29,9 @@ export const loginSchema: FastifySchema = {
                         username: { type: 'string' },
                         email: { type: 'string' },
                         role: { type: 'number' },
-                        avatar_url: { type: 'string' },
-                        revoked: { type: 'boolean' },
-                        created_at: { type: 'string' },
-                        updated_at: { type: 'string' },
+                        avatarUrl: { type: 'string' },
+                        createdAt: { type: 'string' },
+                        updatedAt: { type: 'string' },
                     },
                 },
                 accessToken: {
@@ -41,4 +40,8 @@ export const loginSchema: FastifySchema = {
             },
         },
     },
+};
+
+export const logoutSchema: FastifySchema = {
+    tags: ['Authentication'],
 };

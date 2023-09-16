@@ -5,7 +5,6 @@ ENV NODE_ENV="development"
 ENV SERVER_PORT="8080"
 ENV POSTGRES_URI="postgresql://postgres_user:postgres_password@pg_dev:5432/postgres_db"
 ENV SECRET_COOKIE="cookie_secret"
-ENV SECRET_JWT="jwt_secret"
 ENV REDIS_HOST="redis_dev"
 ENV REDIS_PORT="6379"
 

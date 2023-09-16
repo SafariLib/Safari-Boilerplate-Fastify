@@ -15,8 +15,16 @@ Boilerplate for Rest API development.
 
 ## Documentation
 
+### Initialization
+
 -   [Project initialization](./doc/initialization.md)
 -   [Database management](./doc/prisma.md)
--   [API Error codes](./doc/api_error_codes.md)
 -   [Tests and debug](./doc/tests_and_debug.md)
+
+### Structure
+
 -   [Authentification configuration](./doc/auth_config.md)
+
+### Error codes
+
+-   [API Error codes](./doc/api_error_codes.md)

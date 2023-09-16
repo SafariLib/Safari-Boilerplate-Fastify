@@ -1,11 +1,12 @@
 import type { FastifyInstance, FastifyReply as Reply, FastifyRequest as Request } from 'fastify';
+import { adminPrefix } from '../../utils';
 import { getUserById, getUsers } from './schemas';
 import { GetUserByIdPayload } from './types';
 
 export default async (fastify: FastifyInstance) => {
     fastify.route({
         method: 'GET',
-        url: '/user',
+        url: `${adminPrefix}/user`,
         schema: getUsers,
         handler: async (request: Request, reply: Reply) => {
             const { prisma } = fastify;
@@ -32,7 +33,7 @@ export default async (fastify: FastifyInstance) => {
 
     fastify.route({
         method: 'GET',
-        url: '/user/:id',
+        url: `${adminPrefix}/user/:id`,
         schema: getUserById,
         handler: async (request: Request<GetUserByIdPayload>, reply: Reply) => {
             const { prisma } = fastify;

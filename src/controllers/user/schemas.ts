@@ -1,9 +1,9 @@
 import type { FastifySchema } from 'fastify';
 
 export const getUsers: FastifySchema = {
-    tags: ['Users and Customers'],
+    tags: ['Admin - users'],
 };
 
 export const getUserById: FastifySchema = {
-    tags: ['Users and Customers'],
+    tags: ['Admin - users'],
 };

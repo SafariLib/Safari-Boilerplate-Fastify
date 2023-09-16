@@ -1,15 +1,16 @@
-import testLogin from './tests/auth/test.login.mjs';
-import testToken from './tests/auth/test.token.mjs';
-
 (async () => {
-    // const response = await apiCaller.POST('/auth/login/user', {
-    //     username: 'admin',
-    //     password: 'P@ssword123!',
-    // });
+    const login_success_call = (await import('./tests/auth/test.login_success_call.mjs')).default;
+    const login_fail_call = (await import('./tests/auth/test.login_fail_call.mjs')).default;
+    const login_response_format_test = (await import('./tests/auth/test.login_response_format_test.mjs')).default;
+    const login_protected_routes = (await import('./tests/auth/test.login_protected_routes.mjs')).default;
+    const logout = (await import('./tests/auth/test.logout.mjs')).default;
 
     // -----------------------------
     //          AUTH TESTS
     // -----------------------------
-    await testLogin();
-    await testToken();
+    // await login_success_call();
+    // await login_fail_call();
+    // await login_response_format_test();
+    // await login_protected_routes();
+    await logout();
 })();

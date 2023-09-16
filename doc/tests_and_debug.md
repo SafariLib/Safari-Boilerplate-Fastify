@@ -12,6 +12,4 @@ npm run docker:debug
 
 See [package.json](../package.json) scripts for further informations.
 
-:warning: **Jest** tests wont trigger the debugger on _asynchronous tests_, create `.mjs` scripts or use **Postman** to debug the App.
-
-## Tests
+:warning: **Jest** tests wont trigger the debugger on _asynchronous tests_. I've choosed to manually create tests. create a new `.mjs` scripts or use **Postman** to debug the App.
