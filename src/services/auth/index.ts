@@ -10,24 +10,17 @@ export interface UserToConnect {
     username: string;
     email: string;
     password: string;
-    avatar_url?: string;
-    role: number;
-    revoked: boolean;
-    created_at: Date;
-    updated_at: Date;
+    avatarUrl?: string;
+    roleId: number;
+    roleName: string;
+    isRevoked: boolean;
+    createdAt: Date;
+    updatedAt: Date;
 }
+export type ConnectedUser = Omit<UserToConnect, 'password' | 'isRevoked'>;
 export interface UserClient {
     ip: string;
     userAgent: string;
-}
-export interface ConnectedUser {
-    id: number;
-    username: string;
-    email: string;
-    role?: number;
-    avatarUrl?: string;
-    createdAt: Date;
-    updatedAt: Date;
 }
 
 type Login = (
@@ -154,15 +147,32 @@ export default plugin((async (fastify, opts, done) => {
     const verifyCredentials = async (username: string, password: string, entity: Entity) => {
         const { bcrypt } = fastify;
 
-        const table = entity === 'ADMIN' ? Prisma.sql`"Admin"` : Prisma.sql`"User"`;
+        const entityTable = entity === 'ADMIN' ? Prisma.sql`"Admin"` : Prisma.sql`"User"`;
+        const roleTable = entity === 'ADMIN' ? Prisma.sql`"AdminRole"` : Prisma.sql`"UserRole"`;
+
         const {
             password: passwordFromDb,
-            revoked: isRevoked,
+            isRevoked,
             ...user
         } = (
             await fastify.prisma.$queryRaw<Array<UserToConnect>>`
-            SELECT id, password, revoked, email, avatar_url, role, created_at, updated_at
-            FROM ${table} WHERE username = ${username};
+            SELECT
+                en."id",
+                en."username",
+                en."password",
+                en."revoked" AS "isRevoked",
+                en."email",
+                en."role_id" AS "roleId",
+                rl."name" AS "roleName",
+                en."avatar_url" AS "avatarUrl",
+                en."created_at" AS "createdAt",
+                en."updated_at" AS "updatedAt"
+            FROM
+                ${entityTable} en
+            LEFT JOIN
+                ${roleTable} rl
+            ON en.role_id = rl.id
+            WHERE en."username" = ${username};
         `
         )[0];
 
@@ -175,15 +185,9 @@ export default plugin((async (fastify, opts, done) => {
             tokenContent: {
                 userId: user.id,
                 uuid: randomUUID(),
-                role: user?.role ?? null,
-            } as TokenContent,
-            user: {
-                avatarUrl: user.avatar_url,
-                createdAt: user.created_at,
-                updatedAt: user.updated_at,
-                role: user?.role ?? null,
-                ...user,
-            } as ConnectedUser,
+                role: user?.roleId,
+            },
+            user,
         };
     };
 
@@ -195,11 +199,28 @@ export default plugin((async (fastify, opts, done) => {
      * @throws USER_REVOKED
      */
     const getUserToConnect = async (userId: number, entity: Entity) => {
-        const table = entity === 'ADMIN' ? Prisma.sql`"Admin"` : Prisma.sql`"User"`;
-        const { revoked: isRevoked, ...user } = (
+        const entityTable = entity === 'ADMIN' ? Prisma.sql`"Admin"` : Prisma.sql`"User"`;
+        const roleTable = entity === 'ADMIN' ? Prisma.sql`"AdminRole"` : Prisma.sql`"UserRole"`;
+
+        // FIXME Admin case: userId is a user id instead of an admin id
+        const { isRevoked, ...user } = (
             await fastify.prisma.$queryRaw<Array<UserToConnect>>`
-                SELECT id, revoked, email, avatar_url, role, created_at, updated_at
-                FROM ${table} WHERE id = ${userId};
+            SELECT
+                en."id",
+                en."username",
+                en."revoked" AS "isRevoked",
+                en."email",
+                en."role_id" AS "roleId",
+                rl."name" AS "roleName",
+                en."avatar_url" AS "avatarUrl",
+                en."created_at" AS "createdAt",
+                en."updated_at" AS "updatedAt"
+            FROM
+                ${entityTable} en
+            LEFT JOIN
+                ${roleTable} rl
+            ON en."role_id" = rl."id"
+            WHERE en."id" = ${userId};
             `
         )[0];
 
@@ -209,15 +230,9 @@ export default plugin((async (fastify, opts, done) => {
             tokenContent: {
                 userId: user.id,
                 uuid: randomUUID(),
-                role: user?.role ?? null,
-            } as TokenContent,
-            user: {
-                avatarUrl: user.avatar_url,
-                createdAt: user.created_at,
-                updatedAt: user.updated_at,
-                role: user?.role ?? null,
-                ...user,
-            } as ConnectedUser,
+                role: user?.roleId,
+            },
+            user,
         };
     };
 

@@ -28,14 +28,20 @@ There is two types of accounts:
 
     An admin has a _role_, this role is customizable and you can create has many roles as you need. Default roles are
 
-    -   `"Super Admin" (num 0)`
-    -   `"Admin" (num 1)`
+    -   `"Super Administrateur"`
+    -   `"Administrateur"`
 
-    They have specific authorizations.
+    Role has permissions.
 
 -   **Users**
 
+    A user has a _role_, this role is customizable and you can create has many roles as you need. Default roles are
+
+    -   `"Utilisateur"`
+
     Users accounts are used for client application.
+
+You can find the SQL Query adding those rows in [20230917144853_add_default_field_for_roles](../prisma/migrations/20230917144853_add_default_field_for_roles/migration.sql) migration file.
 
 ## Public and protected routes
 

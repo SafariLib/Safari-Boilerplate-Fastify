@@ -24,12 +24,14 @@ export const createTestData = async () => {
         await prisma.user.createMany({
             data: USERS.map(user => ({
                 ...user,
+                role_id: 1,
                 password: HASHED_PASSWORD,
             })),
         });
         await prisma.admin.createMany({
             data: ADMINS.map(admin => ({
                 ...admin,
+                role_id: 1,
                 password: HASHED_PASSWORD,
             })),
         });

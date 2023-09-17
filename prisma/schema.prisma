@@ -10,9 +10,6 @@ datasource db {
   url      = env("POSTGRES_URI")
 }
 
-// ---------------------------------------------------------
-// ---------------------- USER TABLES ----------------------
-// ---------------------------------------------------------
 model Admin {
   id         Int       @id @default(autoincrement())
   username   String    @unique @db.VarChar(32)
@@ -20,15 +17,15 @@ model Admin {
   password   String    @db.VarChar(64)
   avatar_url String?
   revoked    Boolean   @default(false)
-  role       Int       @default(0)
+  role_id    Int       
   created_at DateTime  @default(now())
   updated_at DateTime?
 	@@map("Admin")
+
+  // Relationship with AdminRole
+  role AdminRole @relation(fields: [role_id], references: [id])
 }
 
-// -------------------------------------------------------------
-// ---------------------- CUSTOMER TABLES ----------------------
-// -------------------------------------------------------------
 model User {
   id         Int       @id @default(autoincrement())
   username   String    @unique @db.VarChar(32)
@@ -36,9 +33,35 @@ model User {
   password   String    @db.VarChar(64)
   avatar_url String?
   revoked    Boolean   @default(false)
-  role       Int       @default(0)
+  role_id    Int       
   created_at DateTime  @default(now())
   updated_at DateTime?
 	@@map("User")
+
+  // Relationship with UserRole
+  role UserRole @relation(fields: [role_id], references: [id])
 }
 
+model AdminRole {
+  id         Int       @id @default(autoincrement())
+  name       String    @unique @db.VarChar(32)
+  is_default Boolean   @default(false)
+  created_at DateTime  @default(now())
+  updated_at DateTime?
+  @@map("AdminRole")
+
+  // Relationship with Admin
+  admins Admin[]
+}
+
+model UserRole {
+  id         Int       @id @default(autoincrement())
+  name       String    @unique @db.VarChar(32)
+  is_default Boolean   @default(false)
+  created_at DateTime  @default(now())
+  updated_at DateTime?
+  @@map("UserRole")
+
+  // Relationship with User
+  users User[]
+}

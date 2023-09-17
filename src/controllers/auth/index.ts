@@ -110,12 +110,6 @@ export default async (fastify: FastifyInstance) => {
         handler: async (request: Request, reply: Reply) => {
             const { authService, jsonWebToken } = fastify;
             try {
-                // FIXME    TypeError: Cannot destructure property 'revoked' of '_f' as it is undefined.
-                //          at /app/src/services/auth/index.ts:199:26
-                //          at Generator.next (<anonymous>)
-                //          at fulfilled (/app/src/services/auth/index.ts:5:58)
-                //          {stack: 'TypeError: Cannot destructure property 'revok…filled (/app/src/services/auth/index.ts:5:58)',
-                //          message: 'Cannot destructure property 'revoked' of '_f' as it is undefined.'}
                 const { user, refreshToken, accessToken } = await authService.refreshAdminTokens();
                 reply.code(200).setCookie(refreshTokenName, refreshToken, jsonWebToken.generateAdminCookieOpts()).send({
                     user,
