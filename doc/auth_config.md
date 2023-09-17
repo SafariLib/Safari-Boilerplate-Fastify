@@ -54,5 +54,10 @@ This is checked with functions that you can find in [utils/routes.ts](../src/uti
 
     _Exceptions for user logout routes_
 
+-   `isUserRefreshRoute()`
+-   `isAdminRefreshRoute()`
+
+    _Token refresh routes_
+
 -   `isAdminProtectedRoute()`
 -   `isUserProtectedRoute()`

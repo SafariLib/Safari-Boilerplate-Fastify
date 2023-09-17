@@ -13,8 +13,16 @@ export default class ApiCaller {
         this.HEADERS['Authorization'] = `Bearer ${token}`;
     }
 
+    removeBearerToken() {
+        delete this.HEADERS['Authorization'];
+    }
+
     setCookieToken(token) {
         this.HEADERS['Cookie'] = `refreshToken=${token}`;
+    }
+
+    removeCookieToken() {
+        delete this.HEADERS['Cookie'];
     }
 
     setContentType(contentType) {

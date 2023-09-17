@@ -119,7 +119,7 @@ export default async () => {
                 refreshToken: res_1_login.headers.get('set-cookie').split(';')[0].split('=')[1],
                 accessToken: (await res_1_login.json()).accessToken,
             },
-            customer: {
+            admin: {
                 refreshToken: res_3_login.headers.get('set-cookie').split(';')[0].split('=')[1],
                 accessToken: (await res_3_login.json()).accessToken,
             },
@@ -127,8 +127,8 @@ export default async () => {
 
         client_1.setCookieToken(tokens.user.refreshToken);
         client_1.setBearerToken(tokens.user.accessToken);
-        client_3.setCookieToken(tokens.user.refreshToken);
-        client_3.setBearerToken(tokens.user.accessToken);
+        client_3.setCookieToken(tokens.admin.refreshToken);
+        client_3.setBearerToken(tokens.admin.accessToken);
 
         const res_user_logout_all = await client_1.GET('/auth/logout/user/all');
         const res_admin_logout_all = await client_3.GET('/auth/logout/admin/all');
@@ -157,15 +157,15 @@ export default async () => {
             res_admin_1_protected_route.status === 401 && res_admin_2_protected_route.status === 401;
 
         if (logoutAllAdminsSuccess) {
-            logger.error(`FAILED: Logout all admin tokens with success`, res_admin_1_protected_route);
-        } else {
             logger.success(`SUCCESS: Logout all admin tokens with success`);
+        } else {
+            logger.error(`FAILED: Logout all admin tokens with success`, res_admin_1_protected_route);
         }
 
         if (logoutAllUsersSuccess) {
-            logger.error(`FAILED: Logout all user tokens with success`, res_user_1_protected_route);
-        } else {
             logger.success(`SUCCESS: Logout all user tokens with success`);
+        } else {
+            logger.error(`FAILED: Logout all user tokens with success`, res_user_1_protected_route);
         }
     }
 

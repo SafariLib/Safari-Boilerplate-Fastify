@@ -5,7 +5,9 @@ export {
     adminPrefix,
     isAdminLogoutRoute,
     isAdminProtectedRoute,
+    isAdminRefreshRoute,
     isUserLogoutRoute,
     isUserProtectedRoute,
+    isUserRefreshRoute,
     userPrefix,
 } from './routes';

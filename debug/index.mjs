@@ -4,6 +4,7 @@
     const login_response_format_test = (await import('./tests/auth/test.login_response_format_test.mjs')).default;
     const login_protected_routes = (await import('./tests/auth/test.login_protected_routes.mjs')).default;
     const logout = (await import('./tests/auth/test.logout.mjs')).default;
+    const refreshing_tokens = (await import('./tests/auth/test.refreshing_tokens.mjs')).default;
 
     // -----------------------------
     //          AUTH TESTS
@@ -12,5 +13,6 @@
     // await login_fail_call();
     // await login_response_format_test();
     // await login_protected_routes();
-    await logout();
+    // await logout();
+    await refreshing_tokens();
 })();

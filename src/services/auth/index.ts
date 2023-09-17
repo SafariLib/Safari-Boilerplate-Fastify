@@ -42,8 +42,10 @@ export default plugin((async (fastify, opts, done) => {
 
     const isAdmin = () => fastify.jsonWebToken.tokens.access.entity === 'ADMIN';
     const isUser = () => fastify.jsonWebToken.tokens.access.entity === 'USER';
-    const getAdminId = () => fastify.jsonWebToken.tokens.access.content.userId;
-    const getUserId = () => fastify.jsonWebToken.tokens.access.content.userId;
+    const getAdminId = () =>
+        fastify.jsonWebToken.tokens.access.content.userId ?? fastify.jsonWebToken.tokens.refresh.content.userId;
+    const getUserId = () =>
+        fastify.jsonWebToken.tokens.access.content.userId ?? fastify.jsonWebToken.tokens.refresh.content.userId;
     const getAccessToken = () => fastify.jsonWebToken.tokens.access.token;
     const getRefreshToken = () => fastify.jsonWebToken.tokens.refresh.token;
 
@@ -60,6 +62,20 @@ export default plugin((async (fastify, opts, done) => {
     const login = async (username: string, password: string, entity: Entity) => {
         const { tokenContent, user } = await verifyCredentials(username, password, entity);
         const { refreshToken, accessToken } = await generateTokens(tokenContent, entity);
+        return { user, refreshToken, accessToken };
+    };
+
+    /**
+     * Generate a new refresh token and a new access token
+     * @param entity The entity type
+     * @returns The user, the refresh token and the access token
+     */
+    const refreshTokens = async (entity: Entity) => {
+        const { tokenContent, user } = await getUserToConnect(getUserId(), entity);
+        const { refreshToken, accessToken } = await generateTokens(tokenContent, entity);
+        // Remove previous token from cache
+        if (entity === 'ADMIN') await fastify.cacheService.deleteAdminToken(getRefreshToken());
+        if (entity === 'USER') await fastify.cacheService.deleteUserToken(getRefreshToken());
         return { user, refreshToken, accessToken };
     };
 
@@ -112,12 +128,14 @@ export default plugin((async (fastify, opts, done) => {
                 const accessToken = jsonWebToken.signAdminAccessToken({ ...tokenContent }, secret);
                 const refreshToken = jsonWebToken.signAdminRefreshToken({ ...tokenContent }, secret);
                 await cacheService.setAdminToken(accessToken, tokenContent.userId);
+                await cacheService.setAdminToken(refreshToken, tokenContent.userId);
                 return { refreshToken, accessToken };
             }
             if (entity === 'USER') {
                 const secret = await cacheService.getOrSetUserSecret(tokenContent.userId);
                 const accessToken = jsonWebToken.signUserAccessToken({ ...tokenContent }, secret);
                 const refreshToken = jsonWebToken.signUserRefreshToken({ ...tokenContent }, secret);
+                await cacheService.setUserToken(refreshToken, tokenContent.userId);
                 await cacheService.setUserToken(accessToken, tokenContent.userId);
                 return { refreshToken, accessToken };
             }
@@ -169,6 +187,40 @@ export default plugin((async (fastify, opts, done) => {
         };
     };
 
+    /**
+     * Retrive the user to connect and create the token content
+     * @param userId The user id to connect
+     * @param entity The entity type
+     * @returns The user and the token content
+     * @throws USER_REVOKED
+     */
+    const getUserToConnect = async (userId: number, entity: Entity) => {
+        const table = entity === 'ADMIN' ? Prisma.sql`"Admin"` : Prisma.sql`"User"`;
+        const { revoked: isRevoked, ...user } = (
+            await fastify.prisma.$queryRaw<Array<UserToConnect>>`
+                SELECT id, revoked, email, avatar_url, role, created_at, updated_at
+                FROM ${table} WHERE id = ${userId};
+            `
+        )[0];
+
+        if (isRevoked) throw { errorCode: 'USER_REVOKED', status: 401 };
+
+        return {
+            tokenContent: {
+                userId: user.id,
+                uuid: randomUUID(),
+                role: user?.role ?? null,
+            } as TokenContent,
+            user: {
+                avatarUrl: user.avatar_url,
+                createdAt: user.created_at,
+                updatedAt: user.updated_at,
+                role: user?.role ?? null,
+                ...user,
+            } as ConnectedUser,
+        };
+    };
+
     fastify.decorate('authService', {
         logUser: async (username: string, password: string) => login(username, password, 'USER'),
         logAdmin: async (username: string, password: string) => login(username, password, 'ADMIN'),
@@ -178,6 +230,8 @@ export default plugin((async (fastify, opts, done) => {
         logoutAllAdmin: async () => logoutAll('ADMIN'),
         revokeUser: async (userId: number) => revokeUser(userId, 'USER'),
         revokeAdmin: async (userId: number) => revokeUser(userId, 'ADMIN'),
+        refreshUserTokens: async () => refreshTokens('USER'),
+        refreshAdminTokens: async () => refreshTokens('ADMIN'),
         isAdmin,
         isUser,
         getAdminId,
@@ -195,6 +249,8 @@ interface AuthService {
     logoutAdmin: () => Promise<void>;
     logoutAllUser: () => Promise<void>;
     logoutAllAdmin: () => Promise<void>;
+    refreshUserTokens: () => Promise<{ user: ConnectedUser; refreshToken: string; accessToken: string }>;
+    refreshAdminTokens: () => Promise<{ user: ConnectedUser; refreshToken: string; accessToken: string }>;
     revokeUser: (userId: number) => Promise<void>;
     revokeAdmin: (userId: number) => Promise<void>;
     isAdmin: () => boolean;

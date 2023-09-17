@@ -1,5 +1,6 @@
+import { refreshTokenName } from '@plugins/jsonWebToken';
 import type { FastifyInstance, FastifyReply as Reply, FastifyRequest as Request } from 'fastify';
-import { loginSchema, logoutSchema } from './schemas';
+import { loginSchema, logoutSchema, refreshSchema } from './schemas';
 import type { LoginPayload } from './types';
 
 export default async (fastify: FastifyInstance) => {
@@ -12,7 +13,7 @@ export default async (fastify: FastifyInstance) => {
             const { password, username } = request.body;
             try {
                 const { user, refreshToken, accessToken } = await authService.logAdmin(username, password);
-                reply.code(200).setCookie('refreshToken', refreshToken, jsonWebToken.generateAdminCookieOpts()).send({
+                reply.code(200).setCookie(refreshTokenName, refreshToken, jsonWebToken.generateAdminCookieOpts()).send({
                     user,
                     accessToken,
                 });
@@ -32,7 +33,7 @@ export default async (fastify: FastifyInstance) => {
             try {
                 const { user, refreshToken, accessToken } = await authService.logUser(username, password);
 
-                reply.code(200).setCookie('refreshToken', refreshToken, jsonWebToken.generateUserCookieOpts()).send({
+                reply.code(200).setCookie(refreshTokenName, refreshToken, jsonWebToken.generateUserCookieOpts()).send({
                     user,
                     accessToken,
                 });
@@ -50,7 +51,7 @@ export default async (fastify: FastifyInstance) => {
             const { authService } = fastify;
             try {
                 authService.logoutAdmin();
-                reply.code(200).clearCookie('refreshToken').send();
+                reply.code(200).clearCookie(refreshTokenName).send();
             } catch (e) {
                 reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
             }
@@ -65,7 +66,7 @@ export default async (fastify: FastifyInstance) => {
             const { authService } = fastify;
             try {
                 await authService.logoutUser();
-                reply.code(200).clearCookie('refreshToken').send();
+                reply.code(200).clearCookie(refreshTokenName).send();
             } catch (e) {
                 reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
             }
@@ -80,7 +81,7 @@ export default async (fastify: FastifyInstance) => {
             const { authService } = fastify;
             try {
                 authService.logoutAllAdmin();
-                reply.code(200).clearCookie('refreshToken').send();
+                reply.code(200).clearCookie(refreshTokenName).send();
             } catch (e) {
                 reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
             }
@@ -95,7 +96,49 @@ export default async (fastify: FastifyInstance) => {
             const { authService } = fastify;
             try {
                 await authService.logoutAllUser();
-                reply.code(200).clearCookie('refreshToken').send();
+                reply.code(200).clearCookie(refreshTokenName).send();
+            } catch (e) {
+                reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
+            }
+        },
+    });
+
+    fastify.route({
+        method: 'GET',
+        url: '/auth/refresh/admin',
+        schema: refreshSchema,
+        handler: async (request: Request, reply: Reply) => {
+            const { authService, jsonWebToken } = fastify;
+            try {
+                // FIXME    TypeError: Cannot destructure property 'revoked' of '_f' as it is undefined.
+                //          at /app/src/services/auth/index.ts:199:26
+                //          at Generator.next (<anonymous>)
+                //          at fulfilled (/app/src/services/auth/index.ts:5:58)
+                //          {stack: 'TypeError: Cannot destructure property 'revok…filled (/app/src/services/auth/index.ts:5:58)',
+                //          message: 'Cannot destructure property 'revoked' of '_f' as it is undefined.'}
+                const { user, refreshToken, accessToken } = await authService.refreshAdminTokens();
+                reply.code(200).setCookie(refreshTokenName, refreshToken, jsonWebToken.generateAdminCookieOpts()).send({
+                    user,
+                    accessToken,
+                });
+            } catch (e) {
+                reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
+            }
+        },
+    });
+
+    fastify.route({
+        method: 'GET',
+        url: '/auth/refresh/user',
+        schema: refreshSchema,
+        handler: async (request: Request, reply: Reply) => {
+            const { authService, jsonWebToken } = fastify;
+            try {
+                const { user, refreshToken, accessToken } = await authService.refreshUserTokens();
+                reply.code(200).setCookie(refreshTokenName, refreshToken, jsonWebToken.generateUserCookieOpts()).send({
+                    user,
+                    accessToken,
+                });
             } catch (e) {
                 reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
             }

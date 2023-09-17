@@ -45,3 +45,29 @@ export const loginSchema: FastifySchema = {
 export const logoutSchema: FastifySchema = {
     tags: ['Authentication'],
 };
+
+export const refreshSchema: FastifySchema = {
+    tags: ['Authentication'],
+    response: {
+        200: {
+            type: 'object',
+            properties: {
+                user: {
+                    type: 'object',
+                    properties: {
+                        id: { type: 'number' },
+                        username: { type: 'string' },
+                        email: { type: 'string' },
+                        role: { type: 'number' },
+                        avatarUrl: { type: 'string' },
+                        createdAt: { type: 'string' },
+                        updatedAt: { type: 'string' },
+                    },
+                },
+                accessToken: {
+                    type: 'string',
+                },
+            },
+        },
+    },
+};

@@ -5,8 +5,7 @@ import jsonwebtoken, { Algorithm, SignOptions, VerifyOptions } from 'jsonwebtoke
 
 export type SignToken<T> = (payload: T, opts: SignOptions, secret: string) => string;
 export type VerifyToken<T> = (token: string, opts: VerifyOptions, secret: string) => T;
-export type GetAccessToken = (request: FastifyRequest) => string;
-export type GetRefreshToken = (request: FastifyRequest) => string;
+export type GetToken = (request: FastifyRequest) => string;
 export interface FastifyToken {
     entity: 'USER' | 'ADMIN';
     token: string;
@@ -21,6 +20,9 @@ export interface TokenContent {
     uuid: string;
     role?: number;
 }
+
+export const accessTokenName = 'accessToken';
+export const refreshTokenName = 'refreshToken';
 
 const algorithm = 'HS256' as Algorithm;
 const adminRefreshExpiresIn = 17600000; // 5 hours
@@ -76,20 +78,23 @@ export default plugin((async (fastify, opts, done) => {
         else return decoded;
     };
 
-    const getAccessToken: GetAccessToken = request => {
+    const getAccessToken: GetToken = request => {
         const { authorization } = request.headers;
-
-        // TODO: Test me
-        // const authKeys = authorization?.split(' ');
-        // if (!authKeys) throw { errorCode: 'AUTH_HEADERS_EMPTY', status: 401 };
-        // const bearer = authKeys?.find(auth => auth === 'Bearer');
-
         if (!authorization) throw { errorCode: 'AUTH_HEADERS_EMPTY', status: 401 };
         return (authorization as string).split(' ')[1];
     };
 
+    const getRefreshToken: GetToken = request => {
+        const { refreshToken: refreshTokenCookie } = request.cookies;
+        if (!refreshTokenCookie) throw { errorCode: 'AUTH_COOKIE_EMPTY', status: 401 };
+        const { value: refreshToken, valid: isValid } = fastify.unsignCookie(refreshTokenCookie);
+        if (!isValid) throw { errorCode: 'AUTH_COOKIE_INVALID', status: 401 };
+        return refreshToken;
+    };
+
     fastify.decorate('jsonWebToken', {
         getAccessToken,
+        getRefreshToken,
         generateUserCookieOpts,
         generateAdminCookieOpts,
         signUserAccessToken: (token, secret) => signToken(token, defaultOpts.signUserAccessOpts, secret),
@@ -107,7 +112,8 @@ export default plugin((async (fastify, opts, done) => {
 }) as FastifyPluginCallback);
 
 interface JsonWebTokenPlugin {
-    getAccessToken: GetAccessToken;
+    getAccessToken: GetToken;
+    getRefreshToken: GetToken;
     generateUserCookieOpts: () => CookieSerializeOptions;
     generateAdminCookieOpts: () => CookieSerializeOptions;
     signUserAccessToken: (token: TokenContent, secret: string) => string;

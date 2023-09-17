@@ -33,7 +33,9 @@ export const registerPlugins = async (fastify: FastifyInstance) => {
         fastify.register(controller),
     );
 
-    [import('@hooks/onRequest/verifyToken')].forEach(hook => fastify.register(hook));
+    [import('@hooks/onRequest/verifyAccessToken'), import('@hooks/onRequest/verifyRefreshToken')].forEach(hook =>
+        fastify.register(hook),
+    );
 
     console.log('Plugins successfully registered');
 
