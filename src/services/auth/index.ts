@@ -36,9 +36,9 @@ export default plugin((async (fastify, opts, done) => {
     const isAdmin = () => fastify.jsonWebToken.tokens.access.entity === 'ADMIN';
     const isUser = () => fastify.jsonWebToken.tokens.access.entity === 'USER';
     const getAdminId = () =>
-        fastify.jsonWebToken.tokens.access.content.userId ?? fastify.jsonWebToken.tokens.refresh.content.userId;
+        fastify.jsonWebToken.tokens.access?.content?.userId ?? fastify.jsonWebToken.tokens.refresh?.content?.userId;
     const getUserId = () =>
-        fastify.jsonWebToken.tokens.access.content.userId ?? fastify.jsonWebToken.tokens.refresh.content.userId;
+        fastify.jsonWebToken.tokens.access?.content?.userId ?? fastify.jsonWebToken.tokens.refresh?.content?.userId;
     const getAccessToken = () => fastify.jsonWebToken.tokens.access.token;
     const getRefreshToken = () => fastify.jsonWebToken.tokens.refresh.token;
 
@@ -202,7 +202,6 @@ export default plugin((async (fastify, opts, done) => {
         const entityTable = entity === 'ADMIN' ? Prisma.sql`"Admin"` : Prisma.sql`"User"`;
         const roleTable = entity === 'ADMIN' ? Prisma.sql`"AdminRole"` : Prisma.sql`"UserRole"`;
 
-        // FIXME Admin case: userId is a user id instead of an admin id
         const { isRevoked, ...user } = (
             await fastify.prisma.$queryRaw<Array<UserToConnect>>`
             SELECT

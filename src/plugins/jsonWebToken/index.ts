@@ -7,9 +7,9 @@ export type SignToken<T> = (payload: T, opts: SignOptions, secret: string) => st
 export type VerifyToken<T> = (token: string, opts: VerifyOptions, secret: string) => T;
 export type GetToken = (request: FastifyRequest) => string;
 export interface FastifyToken {
-    entity: 'USER' | 'ADMIN';
-    token: string;
-    content: DecodedToken;
+    entity?: 'USER' | 'ADMIN';
+    token?: string;
+    content?: DecodedToken;
 }
 export interface DecodedToken extends TokenContent {
     iat: number;
@@ -18,7 +18,7 @@ export interface DecodedToken extends TokenContent {
 export interface TokenContent {
     userId: number;
     uuid: string;
-    role?: number;
+    role: number;
 }
 
 export const accessTokenName = 'accessToken';
