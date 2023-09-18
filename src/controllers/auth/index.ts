@@ -11,6 +11,10 @@ export default async (fastify: FastifyInstance) => {
         handler: async (request: Request<LoginPayload>, reply: Reply) => {
             const { authService, jsonWebToken } = fastify;
             const { password, username } = request.body;
+            const { ip, userAgent } = request.headers;
+
+            console.log(ip, userAgent);
+
             try {
                 const { user, refreshToken, accessToken } = await authService.logAdmin(username, password);
                 reply.code(200).setCookie(refreshTokenName, refreshToken, jsonWebToken.generateAdminCookieOpts()).send({
@@ -110,6 +114,7 @@ export default async (fastify: FastifyInstance) => {
         handler: async (request: Request, reply: Reply) => {
             const { authService, jsonWebToken } = fastify;
             try {
+                await authService.verifyAdminRefreshToken(request);
                 const { user, refreshToken, accessToken } = await authService.refreshAdminTokens();
                 reply.code(200).setCookie(refreshTokenName, refreshToken, jsonWebToken.generateAdminCookieOpts()).send({
                     user,
@@ -128,6 +133,7 @@ export default async (fastify: FastifyInstance) => {
         handler: async (request: Request, reply: Reply) => {
             const { authService, jsonWebToken } = fastify;
             try {
+                await authService.verifyUserRefreshToken(request);
                 const { user, refreshToken, accessToken } = await authService.refreshUserTokens();
                 reply.code(200).setCookie(refreshTokenName, refreshToken, jsonWebToken.generateUserCookieOpts()).send({
                     user,

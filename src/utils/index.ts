@@ -3,11 +3,12 @@ export { registerPlugins } from './register';
 export { default as retry } from './retry';
 export {
     adminPrefix,
+    isAdminLoginRoute,
     isAdminLogoutRoute,
     isAdminProtectedRoute,
-    isAdminRefreshRoute,
+    isRefreshRoute,
+    isUserLoginRoute,
     isUserLogoutRoute,
     isUserProtectedRoute,
-    isUserRefreshRoute,
     userPrefix,
 } from './routes';

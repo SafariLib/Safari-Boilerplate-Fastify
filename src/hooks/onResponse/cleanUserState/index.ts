@@ -2,15 +2,10 @@ import type { FastifyPluginCallback, FastifyReply as Reply, FastifyRequest as Re
 import plugin from 'fastify-plugin';
 
 export default plugin((async (fastify, opts, done) => {
-    fastify.addHook('onResponse', async (request: Request, reply: Reply) => {
-        const { refresh, access } = fastify.jsonWebToken.tokens;
-        refresh.token = null;
-        refresh.content = null;
-        refresh.entity = null;
-        access.token = null;
-        access.content = null;
-        access.entity = null;
-    });
+    /**
+     * Clean fastify token state after each request
+     */
+    fastify.addHook('onResponse', async (request: Request, reply: Reply) => fastify.jsonWebToken.tokens.cleanState());
 
     done();
 }) as FastifyPluginCallback);

@@ -57,6 +57,10 @@ export default plugin((async (fastify, opts, done) => {
     const tokens = {
         access: null as FastifyToken | null,
         refresh: null as FastifyToken | null,
+        cleanState: () => {
+            tokens.access = null;
+            tokens.refresh = null;
+        },
     };
 
     const generateUserCookieOpts = () => ({
@@ -127,6 +131,7 @@ interface JsonWebTokenPlugin {
     tokens: {
         access: FastifyToken | null;
         refresh: FastifyToken | null;
+        cleanState: () => void;
     };
     defaultOpts: typeof defaultOpts;
 }

@@ -19,8 +19,8 @@
         "docker:prisma:studio": "docker exec fastify_dev npx prisma studio -p 5555",
         "docker:build:network": "docker network create local_dev || true",
         "docker:build:dev": "docker buildx build -f \"Dockerfile.dev\" -t fastify_dev \".\"  --pull --rm",
-        "docker:run:redis:with_volume": "docker run -d --network local_dev -v cache:/data --name redis_dev redis:latest",
-        "docker:run:redis": "docker run -d --network local_dev --name redis_dev redis:latest",
+        "docker:run:redis": "docker run -d --network local_dev -v cache:/data --name redis_dev redis:latest",
+        "docker:run:redis:no_volume": "docker run -d --network local_dev --name redis_dev redis:latest",
         "docker:run:db": "docker run -d -e POSTGRES_USER=postgres_user -e POSTGRES_PASSWORD=postgres_password -e POSTGRES_DB=postgres_db --network local_dev -v database:/var/lib/postgresql/data --name pg_dev postgres:latest",
         "docker:run:dev": "docker run -d --network local_dev -p 8080:8080 -p 9229:9229 -p 5555:5555 --name fastify_dev -v ./:/app fastify_dev",
         "docker:init": "npm run docker:build:network && npm run docker:build:dev && npm run docker:run:db && npm run docker:run:redis && npm run docker:run:dev"

@@ -1,4 +1,10 @@
-import { isAdminLogoutRoute, isAdminProtectedRoute, isUserLogoutRoute, isUserProtectedRoute } from '@utils';
+import {
+    isAdminLogoutRoute,
+    isAdminProtectedRoute,
+    isRefreshRoute,
+    isUserLogoutRoute,
+    isUserProtectedRoute,
+} from '@utils';
 import type { FastifyPluginCallback, FastifyReply as Reply, FastifyRequest as Request } from 'fastify';
 import plugin from 'fastify-plugin';
 
@@ -6,6 +12,9 @@ export default plugin((async (fastify, opts, done) => {
     fastify.addHook('onRequest', async (request: Request, reply: Reply) => {
         const { cacheService, jsonWebToken } = fastify;
         const { url } = request;
+
+        jsonWebToken.tokens.cleanState();
+        if (isRefreshRoute(url)) return;
 
         try {
             if (isAdminProtectedRoute(url) || isAdminLogoutRoute(url)) {

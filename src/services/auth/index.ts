@@ -2,7 +2,7 @@ import { TokenContent } from '@plugins/jsonWebToken';
 import { Prisma } from '@prisma/client';
 import { retry } from '@utils';
 import { randomUUID } from 'crypto';
-import type { FastifyPluginCallback } from 'fastify';
+import type { FastifyPluginCallback, FastifyRequest as Request } from 'fastify';
 import plugin from 'fastify-plugin';
 
 export interface UserToConnect {
@@ -35,8 +35,6 @@ export default plugin((async (fastify, opts, done) => {
 
     const isAdmin = () => fastify.jsonWebToken.tokens.access.entity === 'ADMIN';
     const isUser = () => fastify.jsonWebToken.tokens.access.entity === 'USER';
-    const getAdminId = () =>
-        fastify.jsonWebToken.tokens.access?.content?.userId ?? fastify.jsonWebToken.tokens.refresh?.content?.userId;
     const getUserId = () =>
         fastify.jsonWebToken.tokens.access?.content?.userId ?? fastify.jsonWebToken.tokens.refresh?.content?.userId;
     const getAccessToken = () => fastify.jsonWebToken.tokens.access.token;
@@ -88,8 +86,9 @@ export default plugin((async (fastify, opts, done) => {
      */
     const logoutAll = async (entity: Entity) => {
         const { cacheService } = fastify;
-        if (entity === 'ADMIN') await cacheService.deleteAdminCache(getAdminId());
-        if (entity === 'USER') await cacheService.deleteUserCache(getUserId());
+        const userId = getUserId();
+        if (entity === 'ADMIN') await cacheService.deleteAdminCache(userId);
+        if (entity === 'USER') await cacheService.deleteUserCache(userId);
     };
 
     /**
@@ -191,6 +190,29 @@ export default plugin((async (fastify, opts, done) => {
         };
     };
 
+    const verifyRefreshToken = async (request: Request, entity: Entity) => {
+        const { jsonWebToken, cacheService } = fastify;
+        if (entity === 'ADMIN') {
+            const token = jsonWebToken.getRefreshToken(request);
+            const secret = await cacheService.getAdminSecret(token);
+            if (!secret) throw { status: 401, errorCode: 'AUTH_TOKEN_REVOKED' };
+            jsonWebToken.tokens.refresh = {
+                entity: 'ADMIN',
+                content: jsonWebToken.verifyAdminRefreshToken(token, secret),
+                token,
+            };
+        } else if (entity === 'USER') {
+            const token = jsonWebToken.getRefreshToken(request);
+            const secret = await cacheService.getUserSecret(token);
+            if (!secret) throw { status: 401, errorCode: 'AUTH_TOKEN_REVOKED' };
+            jsonWebToken.tokens.refresh = {
+                entity: 'USER',
+                content: jsonWebToken.verifyUserRefreshToken(token, secret),
+                token,
+            };
+        }
+    };
+
     /**
      * Retrive the user to connect and create the token content
      * @param userId The user id to connect
@@ -244,11 +266,12 @@ export default plugin((async (fastify, opts, done) => {
         logoutAllAdmin: async () => logoutAll('ADMIN'),
         revokeUser: async (userId: number) => revokeUser(userId, 'USER'),
         revokeAdmin: async (userId: number) => revokeUser(userId, 'ADMIN'),
+        verifyUserRefreshToken: async (request: Request) => verifyRefreshToken(request, 'USER'),
+        verifyAdminRefreshToken: async (request: Request) => verifyRefreshToken(request, 'ADMIN'),
         refreshUserTokens: async () => refreshTokens('USER'),
         refreshAdminTokens: async () => refreshTokens('ADMIN'),
         isAdmin,
         isUser,
-        getAdminId,
         getUserId,
         getAccessToken,
         getRefreshToken,
@@ -263,13 +286,14 @@ interface AuthService {
     logoutAdmin: () => Promise<void>;
     logoutAllUser: () => Promise<void>;
     logoutAllAdmin: () => Promise<void>;
+    verifyUserRefreshToken: (request: Request) => Promise<void>;
+    verifyAdminRefreshToken: (request: Request) => Promise<void>;
     refreshUserTokens: () => Promise<{ user: ConnectedUser; refreshToken: string; accessToken: string }>;
     refreshAdminTokens: () => Promise<{ user: ConnectedUser; refreshToken: string; accessToken: string }>;
     revokeUser: (userId: number) => Promise<void>;
     revokeAdmin: (userId: number) => Promise<void>;
     isAdmin: () => boolean;
     isUser: () => boolean;
-    getAdminId: () => number;
     getUserId: () => number;
     getAccessToken: () => string;
     getRefreshToken: () => string;
