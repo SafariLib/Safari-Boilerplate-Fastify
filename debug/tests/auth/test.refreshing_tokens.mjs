@@ -60,6 +60,7 @@ export default async () => {
         const userRefreshJsonRes = await userRefreshRes.json();
 
         if (adminRefreshRes.status !== 200) {
+            // FIXME this test always returns a 500 when server has started
             logger.error(`FAILED: Refresh admin token`, adminRefreshRes);
         } else {
             logger.success(`SUCCESS: Refresh admin token`);

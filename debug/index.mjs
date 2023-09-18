@@ -9,10 +9,10 @@
     // -----------------------------
     //          AUTH TESTS
     // -----------------------------
-    // await login_success_call();
-    // await login_fail_call();
-    // await login_response_format_test();
-    // await login_protected_routes();
-    // await logout();
+    await login_success_call();
+    await login_fail_call();
+    await login_response_format_test();
+    await login_protected_routes();
+    await logout();
     await refreshing_tokens();
 })();

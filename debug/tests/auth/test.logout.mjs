@@ -167,6 +167,22 @@ export default async () => {
         } else {
             logger.error(`FAILED: Logout all user tokens with success`, res_user_1_protected_route);
         }
+
+        // Try to refresh tokens with revoked token
+        const res_user_refresh = await client_1.GET('/auth/refresh/user');
+        const res_admin_refresh = await client_3.GET('/auth/refresh/admin');
+
+        if (res_user_refresh.status !== 401) {
+            logger.error(`FAILED: Forbid token refresh with revoked user refresh token`, res_user_refresh);
+        } else {
+            logger.success(`SUCCESS: Forbid token refresh with revoked user refresh token`);
+        }
+        if (res_admin_refresh.status !== 401) {
+            logger.error(`FAILED: Forbid token refresh with revoked admin refresh token`, res_admin_refresh);
+        }
+        if (res_user_refresh.status === 401 && res_admin_refresh.status === 401) {
+            logger.success(`SUCCESS: Forbid token refresh with revoked admin refresh token`);
+        }
     }
 
     await cleanTestData();
