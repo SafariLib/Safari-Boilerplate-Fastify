@@ -18,14 +18,23 @@ export interface UserToConnect {
     updatedAt: Date;
 }
 export type ConnectedUser = Omit<UserToConnect, 'password' | 'isRevoked'>;
-export interface UserClient {
+export interface LoginAttempt {
+    userId: number;
     ip: string;
-    userAgent: string;
+    createdAt: Date;
+}
+interface LoginAttemptState {
+    userAttempts: Array<LoginAttempt>;
+    adminAttempts: Array<LoginAttempt>;
+    cleanState: () => void;
 }
 
+type HasTooManyAttemps = (userId: number, ip: string, entity: Entity) => boolean;
+type LogAttempt = (userId: number, ip: string, entity: Entity) => void;
 type Login = (
     username: string,
     password: string,
+    ip: string,
 ) => Promise<{ user: ConnectedUser; refreshToken: string; accessToken: string }>;
 
 type Entity = 'ADMIN' | 'USER';
@@ -33,12 +42,47 @@ type Entity = 'ADMIN' | 'USER';
 export default plugin((async (fastify, opts, done) => {
     if (fastify.hasDecorator('authService')) return done();
 
-    const isAdmin = () => fastify.jsonWebToken.tokens.access.entity === 'ADMIN';
-    const isUser = () => fastify.jsonWebToken.tokens.access.entity === 'USER';
+    const isAdmin = () => fastify.jsonWebToken.tokens.access?.entity === 'ADMIN';
+    const isUser = () => fastify.jsonWebToken.tokens.access?.entity === 'USER';
     const getUserId = () =>
         fastify.jsonWebToken.tokens.access?.content?.userId ?? fastify.jsonWebToken.tokens.refresh?.content?.userId;
-    const getAccessToken = () => fastify.jsonWebToken.tokens.access.token;
-    const getRefreshToken = () => fastify.jsonWebToken.tokens.refresh.token;
+    const getAccessToken = () => fastify.jsonWebToken.tokens.access?.token;
+    const getRefreshToken = () => fastify.jsonWebToken.tokens.refresh?.token;
+    const getUserIp = (request: Request) => request.headers.ip as string;
+
+    /**
+     * The login attempt state
+     *  - attempts: The login attempts
+     *  - hasTooManyAttemps: Check if the user is blocked
+     * The user is blocked if he has 5 login attempts in the last 15 minutes
+     */
+    const attemptState: LoginAttemptState = {
+        adminAttempts: [],
+        userAttempts: [],
+        cleanState: () => {
+            attemptState.adminAttempts = attemptState.adminAttempts.filter(
+                attempt => attempt.createdAt.getTime() > Date.now() - 15 * 60 * 1000,
+            );
+            attemptState.userAttempts = attemptState.userAttempts.filter(
+                attempt => attempt.createdAt.getTime() > Date.now() - 15 * 60 * 1000,
+            );
+        },
+    };
+
+    /**
+     * Check if the authentification is blocked due to too many failed login attempts
+     * @param userId The user id
+     * @param userAgent The user agent
+     * @param ip The user ip
+     * @param entity The entity type
+     */
+    const hasTooManyAttemps: HasTooManyAttemps = (userId, ip, entity) =>
+        (entity === 'ADMIN' ? attemptState.adminAttempts : attemptState.userAttempts).filter(
+            attempt =>
+                attempt.userId === userId &&
+                attempt.ip === ip &&
+                attempt.createdAt.getTime() > Date.now() - 15 * 60 * 1000,
+        ).length >= 5;
 
     /**
      * Log a user
@@ -50,8 +94,8 @@ export default plugin((async (fastify, opts, done) => {
      * @throws USER_REVOKED
      * @throws USER_NOT_FOUND
      */
-    const login = async (username: string, password: string, entity: Entity) => {
-        const { tokenContent, user } = await verifyCredentials(username, password, entity);
+    const login = async (username: string, password: string, ip: string, entity: Entity) => {
+        const { tokenContent, user } = await verifyCredentials(username, password, ip, entity);
         const { refreshToken, accessToken } = await generateTokens(tokenContent, entity);
         return { user, refreshToken, accessToken };
     };
@@ -105,6 +149,21 @@ export default plugin((async (fastify, opts, done) => {
     };
 
     /**
+     * Log a failed login attempt
+     * @param userId The user id
+     * @param userAgent The user agent
+     * @param ip The user ip
+     * @param entity The entity type
+     */
+    const LogAttempt: LogAttempt = (userId, ip, entity) => {
+        (entity === 'ADMIN' ? attemptState.adminAttempts : attemptState.userAttempts).push({
+            userId,
+            ip,
+            createdAt: new Date(),
+        });
+    };
+
+    /**
      * Generate a refresh token and an access token
      * @param tokenContent The token content
      * @param ip The user ip
@@ -143,7 +202,7 @@ export default plugin((async (fastify, opts, done) => {
      * @throws USER_INCORRECT_PASSWORD
      * @throws USER_REVOKED
      */
-    const verifyCredentials = async (username: string, password: string, entity: Entity) => {
+    const verifyCredentials = async (username: string, password: string, ip: string, entity: Entity) => {
         const { bcrypt } = fastify;
 
         const entityTable = entity === 'ADMIN' ? Prisma.sql`"Admin"` : Prisma.sql`"User"`;
@@ -175,10 +234,16 @@ export default plugin((async (fastify, opts, done) => {
         `
         )[0];
 
+        if (hasTooManyAttemps(user.id, ip, entity)) throw { errorCode: 'USER_TOO_MANY_ATTEMPTS', status: 401 };
+
         const doesPasswordMatch = await bcrypt.compareStrings(password, passwordFromDb);
 
         if (isRevoked) throw { errorCode: 'USER_REVOKED', status: 401 };
-        if (!doesPasswordMatch) throw { errorCode: 'USER_INCORRECT_PASSWORD', status: 401 };
+        if (!doesPasswordMatch) {
+            LogAttempt(user.id, ip, entity);
+            attemptState.cleanState();
+            throw { errorCode: 'USER_INCORRECT_PASSWORD', status: 401 };
+        }
 
         return {
             tokenContent: {
@@ -258,8 +323,8 @@ export default plugin((async (fastify, opts, done) => {
     };
 
     fastify.decorate('authService', {
-        logUser: async (username: string, password: string) => login(username, password, 'USER'),
-        logAdmin: async (username: string, password: string) => login(username, password, 'ADMIN'),
+        logUser: async (username: string, password: string, ip: string) => login(username, password, ip, 'USER'),
+        logAdmin: async (username: string, password: string, ip: string) => login(username, password, ip, 'ADMIN'),
         logoutUser: async () => logout('USER'),
         logoutAdmin: async () => logout('ADMIN'),
         logoutAllUser: async () => logoutAll('USER'),
@@ -275,6 +340,7 @@ export default plugin((async (fastify, opts, done) => {
         getUserId,
         getAccessToken,
         getRefreshToken,
+        getUserIp,
     });
     done();
 }) as FastifyPluginCallback);
@@ -297,6 +363,7 @@ interface AuthService {
     getUserId: () => number;
     getAccessToken: () => string;
     getRefreshToken: () => string;
+    getUserIp: (request: Request) => string;
 }
 
 declare module 'fastify' {

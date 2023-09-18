@@ -18,6 +18,8 @@ This API uses two tokens
 
 Both tokens are protected by a secret randomly generated for each user. They can be revoked and thus users can logout one or all account securely.
 
+Authentication attempts are limited to 5 per 15 minutes based on the client Ip adress. This feature is handled in the server state and revoked ip adresses are lost on server reboot.
+
 ## Accounts
 
 There is two types of accounts:

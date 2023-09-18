@@ -7,6 +7,7 @@ List of all API error codes.
 | `USER_REVOKED` | User connection failed as user's state is currently **revoked**. |
 | `USER_INCORRECT_PASSWORD` | User connection failed as provided password does not match. |
 | `AUTH_HEADERS_EMPTY` | Request authorization headers are empty. |
+| `AUTH_TOO_MANY_ATTEMPTS` | More than 5 failed login attempts in the last 15 minutes. |
 | `AUTH_COOKIE_EMPTY` | Request authorization cookie is empty. |
 | `AUTH_COOKIE_INVALID` | Request authorization cookie decryption failed. |
 | `AUTH_TOKEN_EXPIRED` | Bearer token is expired. |

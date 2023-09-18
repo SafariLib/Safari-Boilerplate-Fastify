@@ -29,14 +29,34 @@ export default async () => {
             });
 
         // Admin login attempts
-        for (let i = 0; i < 4; i++) await adminLogWrongPasswordSpamer();
-        const adminLogWrongPasswordRes = await adminLogWrongPasswordSpamer();
+        for (let i = 0; i < 5; i++) await adminLogWrongPasswordSpamer();
+        const adminLogWrongPasswordRes = await (async () => {
+            const res = await adminLogWrongPasswordSpamer();
+            const { message } = await res.json();
+            return message;
+        })();
 
-        if (adminLogWrongPasswordRes.status !== 401) {
+        // User login attempts
+        for (let i = 0; i < 5; i++) await userLogWrongPasswordSpamer();
+        const userLogWrongPasswordRes = await (async () => {
+            const res = await userLogWrongPasswordSpamer();
+            const { message } = await res.json();
+            return message;
+        })();
+
+        if (adminLogWrongPasswordRes !== 'USER_TOO_MANY_ATTEMPTS') {
             logger.error(`FAILED: Admin login attempt successfully limited to 5 per 15min`, adminLogWrongPasswordRes);
         } else {
             logger.success(`SUCCESS: Admin login attempt successfully limited to 5 per 15min`);
         }
+        if (userLogWrongPasswordRes !== 'USER_TOO_MANY_ATTEMPTS') {
+            logger.error(`FAILED: User login attempt successfully limited to 5 per 15min`, userLogWrongPasswordRes);
+        } else {
+            logger.success(`SUCCESS: User login attempt successfully limited to 5 per 15min`);
+        }
+
+        // Other client should be able to login with the same credentials
+        // I don't know how to fake ip address so I don't know how to test this
     }
 
     await cleanTestData();

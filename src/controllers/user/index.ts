@@ -26,7 +26,7 @@ export default async (fastify: FastifyInstance) => {
 
                 reply.code(200).send(users);
             } catch (e) {
-                reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
+                reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
             }
         },
     });
@@ -57,7 +57,7 @@ export default async (fastify: FastifyInstance) => {
 
                 reply.code(200).send(user);
             } catch (e) {
-                reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
+                reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
             }
         },
     });

@@ -11,18 +11,16 @@ export default async (fastify: FastifyInstance) => {
         handler: async (request: Request<LoginPayload>, reply: Reply) => {
             const { authService, jsonWebToken } = fastify;
             const { password, username } = request.body;
-            const { ip, userAgent } = request.headers;
-
-            console.log(ip, userAgent);
+            const userClient = authService.getUserIp(request);
 
             try {
-                const { user, refreshToken, accessToken } = await authService.logAdmin(username, password);
+                const { user, refreshToken, accessToken } = await authService.logAdmin(username, password, userClient);
                 reply.code(200).setCookie(refreshTokenName, refreshToken, jsonWebToken.generateAdminCookieOpts()).send({
                     user,
                     accessToken,
                 });
             } catch (e) {
-                reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
+                reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
             }
         },
     });
@@ -34,15 +32,17 @@ export default async (fastify: FastifyInstance) => {
         handler: async (request: Request<LoginPayload>, reply: Reply) => {
             const { authService, jsonWebToken } = fastify;
             const { password, username } = request.body;
+            const userClient = authService.getUserIp(request);
+
             try {
-                const { user, refreshToken, accessToken } = await authService.logUser(username, password);
+                const { user, refreshToken, accessToken } = await authService.logUser(username, password, userClient);
 
                 reply.code(200).setCookie(refreshTokenName, refreshToken, jsonWebToken.generateUserCookieOpts()).send({
                     user,
                     accessToken,
                 });
             } catch (e) {
-                reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
+                reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
             }
         },
     });
@@ -57,7 +57,7 @@ export default async (fastify: FastifyInstance) => {
                 authService.logoutAdmin();
                 reply.code(200).clearCookie(refreshTokenName).send();
             } catch (e) {
-                reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
+                reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
             }
         },
     });
@@ -72,7 +72,7 @@ export default async (fastify: FastifyInstance) => {
                 await authService.logoutUser();
                 reply.code(200).clearCookie(refreshTokenName).send();
             } catch (e) {
-                reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
+                reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
             }
         },
     });
@@ -87,7 +87,7 @@ export default async (fastify: FastifyInstance) => {
                 authService.logoutAllAdmin();
                 reply.code(200).clearCookie(refreshTokenName).send();
             } catch (e) {
-                reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
+                reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
             }
         },
     });
@@ -102,7 +102,7 @@ export default async (fastify: FastifyInstance) => {
                 await authService.logoutAllUser();
                 reply.code(200).clearCookie(refreshTokenName).send();
             } catch (e) {
-                reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
+                reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
             }
         },
     });
@@ -121,7 +121,7 @@ export default async (fastify: FastifyInstance) => {
                     accessToken,
                 });
             } catch (e) {
-                reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
+                reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
             }
         },
     });
@@ -140,7 +140,7 @@ export default async (fastify: FastifyInstance) => {
                     accessToken,
                 });
             } catch (e) {
-                reply.code(e?.status ?? 500).send(e?.errorCode ?? e);
+                reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
             }
         },
     });
