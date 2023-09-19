@@ -1,6 +1,12 @@
 # Initialization
 
--   Update `package.json` **docker** scripts with customized network, volumes and image names.
+-   Use `npm run docker:init:bash` to start developpment using docker.
+    -   API is running on **port 8081**
+    -   PSQL Database is running on the configured network (no port forwarding)
+    -   DBeaver Cloud is running on **port 8978**
+    -   Prisma Studio is exposed on **port 5555** (not running by default)
+-   Update `docker_init.sh`/`docker_init.bat` to customize docker setup.
+    -   Default network is set during the script execution.
 -   Use the [Dockerfile.dev](../Dockerfile.dev) to enhance container's configuration.
 
 ## Set enviroment variables

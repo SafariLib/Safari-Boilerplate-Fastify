@@ -3,9 +3,9 @@ FROM node:lts-slim
 # Set environment variables
 ENV NODE_ENV="development"
 ENV SERVER_PORT="8080"
-ENV POSTGRES_URI="postgresql://postgres_user:postgres_password@pg_dev:5432/postgres_db"
+ENV POSTGRES_URI="postgresql://postgres_user:postgres_password@safari_fastify_postgres:5432/postgres_db"
 ENV SECRET_COOKIE="cookie_secret"
-ENV REDIS_HOST="redis_dev"
+ENV REDIS_HOST="safari_fastify_redis"
 ENV REDIS_PORT="6379"
 
 # Install openssl and curl (needed for prisma migrate)
