@@ -16,41 +16,21 @@ export default async () => {
         const admin_client = new ApiCaller();
         const user_client = new ApiCaller();
 
-        const adminLogWrongPasswordSpamer = async () =>
-            await admin_client.POST('/auth/login/admin', {
-                username: testAdmins[0].username,
-                password: 'Wrong_password8832',
-            });
-
-        const userLogWrongPasswordSpamer = async () =>
-            await user_client.POST('/auth/login/user', {
-                username: testUsers[0].username,
-                password: 'Wrong_password8832',
-            });
-
         // Admin login attempts
-        for (let i = 0; i < 5; i++) await adminLogWrongPasswordSpamer();
-        const adminLogWrongPasswordRes = await (async () => {
-            const res = await adminLogWrongPasswordSpamer();
-            const { message } = await res.json();
-            return message;
-        })();
+        for (let i = 0; i < 5; i++) await admin_client.ConnectAsAdmin(testAdmins[0].username, 'Wrong_password8832');
+        const adminLogin = await admin_client.ConnectAsAdmin(testAdmins[0].username);
 
         // User login attempts
-        for (let i = 0; i < 5; i++) await userLogWrongPasswordSpamer();
-        const userLogWrongPasswordRes = await (async () => {
-            const res = await userLogWrongPasswordSpamer();
-            const { message } = await res.json();
-            return message;
-        })();
+        for (let i = 0; i < 5; i++) await user_client.ConnectAsUser(testUsers[0].username, 'Wrong_password8832');
+        const userLogin = await user_client.ConnectAsUser(testUsers[0].username);
 
-        if (adminLogWrongPasswordRes !== 'USER_TOO_MANY_ATTEMPTS') {
-            logger.error(`FAILED: Admin login attempt successfully limited to 5 per 15min`, adminLogWrongPasswordRes);
+        if (adminLogin.res.message !== 'USER_TOO_MANY_ATTEMPTS') {
+            logger.error(`FAILED: Admin login attempt successfully limited to 5 per 15min`, adminLogin.res.message);
         } else {
             logger.success(`SUCCESS: Admin login attempt successfully limited to 5 per 15min`);
         }
-        if (userLogWrongPasswordRes !== 'USER_TOO_MANY_ATTEMPTS') {
-            logger.error(`FAILED: User login attempt successfully limited to 5 per 15min`, userLogWrongPasswordRes);
+        if (userLogin.res.message !== 'USER_TOO_MANY_ATTEMPTS') {
+            logger.error(`FAILED: User login attempt successfully limited to 5 per 15min`, userLogin.res.message);
         } else {
             logger.success(`SUCCESS: User login attempt successfully limited to 5 per 15min`);
         }

@@ -15,25 +15,25 @@ export default async () => {
         */
 
         for (const user of testUsers) {
-            const response = await API.POST('/auth/login/user', {
+            const { res } = await API.POST('/auth/login/user', {
                 username: user.username,
                 password: PASSWORD,
             });
 
-            if (response.status !== 200) {
-                logger.error(`FAILED: Log user ${user.username} with success`, response);
+            if (res.status !== 200) {
+                logger.error(`FAILED: Log user ${user.username} with success`, res);
             } else {
                 logger.success(`SUCCESS: Log user ${user.username} with success`);
             }
         }
         for (const admin of testAdmins) {
-            const response = await API.POST('/auth/login/admin', {
+            const { res } = await API.POST('/auth/login/admin', {
                 username: admin.username,
                 password: PASSWORD,
             });
 
-            if (response.status !== 200) {
-                logger.error(`FAILED: Log admin ${admin.username} with success`, response);
+            if (res.status !== 200) {
+                logger.error(`FAILED: Log admin ${admin.username} with success`, res);
             } else {
                 logger.success(`SUCCESS: Log admin ${admin.username} with success`);
             }

@@ -1,73 +1,64 @@
 import ApiCaller from '../../utils/ApiCaller.mjs';
 import logger from '../../utils/logger.mjs';
-import { PASSWORD, cleanTestData, initData } from './utils.mjs';
+import { cleanTestData, initData } from './utils.mjs';
 
 const TESTS_NAME = 'Login response format';
 
 export default async () => {
     logger.startTest(TESTS_NAME);
     const { testUsers, testAdmins } = await initData();
-    const API = new ApiCaller();
 
     {
         /*
             Login should return user object and tokens
         */
 
-        const userResponse = await API.POST('/auth/login/user', {
-            username: testUsers[0].username,
-            password: PASSWORD,
-        });
+        // Tests for user
+        const user_client = new ApiCaller();
+        const { res: userRes, json: userJson } = await user_client.ConnectAsUser(testUsers[0].username);
 
-        const userJsonContent = await userResponse.json();
-
-        if (userJsonContent.user?.password !== undefined) {
-            logger.error(`FAILED: User Login does return password`, userResponse);
+        if (userJson.user?.password !== undefined) {
+            logger.error(`FAILED: User Login does return password`, userJson);
         } else {
             logger.success(`SUCCESS: User Login does not return password`);
         }
 
-        if (userJsonContent.accessToken === undefined) {
-            logger.error(`FAILED: User Login does not return accessToken`, userResponse);
+        if (userJson.accessToken === undefined) {
+            logger.error(`FAILED: User Login does not return accessToken`, userJson);
         } else {
             logger.success(`SUCCESS: User Login does return accessToken`);
         }
 
-        const userRefreshToken = userResponse.headers.get('set-cookie').split(';')[0].split('=')[1];
+        const userRefreshToken = userRes.headers.get('set-cookie').split(';')[0].split('=')[1];
 
         if (userRefreshToken === undefined) {
-            logger.error(`FAILED: User Login does not return refreshToken`, userResponse);
+            logger.error(`FAILED: User Login does not return refreshToken`, userRes);
         } else {
             logger.success(`SUCCESS: User Login does return refreshToken`);
         }
 
-        // For admins
+        // Tests for admin
+        const user_admin = new ApiCaller();
+        const { res: adminRes, json: adminJson } = await user_client.ConnectAsAdmin(testAdmins[0].username);
 
-        const adminResponse = await API.POST('/auth/login/admin', {
-            username: testAdmins[0].username,
-            password: PASSWORD,
-        });
-
-        const adminJsonContent = await adminResponse.json();
-
-        if (adminJsonContent.user?.password !== undefined) {
-            logger.error(`FAILED: Admin Login does return password`, adminResponse);
+        if (adminJson.user?.password !== undefined) {
+            logger.error(`FAILED: User Login does return password`, adminJson);
         } else {
-            logger.success(`SUCCESS: Admin Login does not return password`);
+            logger.success(`SUCCESS: User Login does not return password`);
         }
 
-        if (adminJsonContent.accessToken === undefined) {
-            logger.error(`FAILED: Admin Login does not return accessToken`, adminResponse);
+        if (adminJson.accessToken === undefined) {
+            logger.error(`FAILED: User Login does not return accessToken`, adminJson);
         } else {
-            logger.success(`SUCCESS: Admin Login does return accessToken`);
+            logger.success(`SUCCESS: User Login does return accessToken`);
         }
 
-        const adminRefreshToken = adminResponse.headers.get('set-cookie').split(';')[0].split('=')[1];
+        const adminRefreshToken = adminRes.headers.get('set-cookie').split(';')[0].split('=')[1];
 
         if (adminRefreshToken === undefined) {
-            logger.error(`FAILED: Admin Login does not return refreshToken`, adminResponse);
+            logger.error(`FAILED: User Login does not return refreshToken`, adminRes);
         } else {
-            logger.success(`SUCCESS: Admin Login does return refreshToken`);
+            logger.success(`SUCCESS: User Login does return refreshToken`);
         }
     }
 

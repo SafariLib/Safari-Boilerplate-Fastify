@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import ApiCaller from '../../utils/ApiCaller.mjs';
 
 export const PASSWORD = 'P@ssw0rdTest123';
 export const HASHED_PASSWORD = bcrypt.hashSync(PASSWORD, 10);
@@ -90,4 +91,28 @@ export const initData = async () => {
             accessToken: null,
         })),
     };
+};
+
+export const connectUser = async username => {
+    const client = new ApiCaller();
+    const res = await client.POST('/auth/login/user', {
+        username,
+        password: PASSWORD,
+    });
+    const json = await res.json();
+    client.setCookieToken(res.headers.get('set-cookie').split(';')[0].split('=')[1]);
+    client.setBearerToken(json.accessToken);
+    return client;
+};
+
+export const connectAdmin = async username => {
+    const client = new ApiCaller();
+    const res = await client.POST('/auth/login/admin', {
+        username,
+        password: PASSWORD,
+    });
+    const json = await res.json();
+    client.setCookieToken(res.headers.get('set-cookie').split(';')[0].split('=')[1]);
+    client.setBearerToken(json.accessToken);
+    return client;
 };

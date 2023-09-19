@@ -1,6 +1,6 @@
 import ApiCaller from '../../utils/ApiCaller.mjs';
 import logger from '../../utils/logger.mjs';
-import { PASSWORD, cleanTestData, initData } from './utils.mjs';
+import { cleanTestData, initData } from './utils.mjs';
 
 const TESTS_NAME = 'Access protected routes';
 
@@ -14,8 +14,8 @@ export default async () => {
         */
 
         const visitorClient = new ApiCaller();
-        const visitorProtectedResponse = await visitorClient.GET('/protected/ping');
-        const visitorAdminProtectedResponse = await visitorClient.GET('/protected/admin/ping');
+        const { res: visitorProtectedResponse } = await visitorClient.GET('/protected/ping');
+        const { res: visitorAdminProtectedResponse } = await visitorClient.GET('/protected/admin/ping');
 
         if (visitorProtectedResponse.status !== 401) {
             logger.error(`FAILED: Visitor should not be able to access protected routes`, visitorProtectedResponse);
@@ -36,17 +36,9 @@ export default async () => {
             Logged user should be able to access protected routes
         */
 
-        const userClient = new ApiCaller();
-        const userResponse = await userClient.POST('/auth/login/user', {
-            username: testUsers[0].username,
-            password: PASSWORD,
-        });
-
-        const userJsonContent = await userResponse.json();
-        userClient.setBearerToken(userJsonContent.accessToken);
-        userClient.setCookieToken(userResponse.headers.get('set-cookie').split(';')[0].split('=')[1]);
-
-        const userProtectedResponse = await userClient.GET('/protected/ping');
+        const user_client = new ApiCaller();
+        await user_client.ConnectAsUser(testUsers[0].username);
+        const { res: userProtectedResponse } = await user_client.GET('/protected/ping');
 
         if (userProtectedResponse.status !== 200) {
             logger.error(`FAILED: Logged user should be able to access protected routes`, userProtectedResponse);
@@ -54,17 +46,9 @@ export default async () => {
             logger.success(`SUCCESS: Logged user should be able to access protected routes`);
         }
 
-        const adminClient = new ApiCaller();
-        const adminResponse = await adminClient.POST('/auth/login/admin', {
-            username: testAdmins[0].username,
-            password: PASSWORD,
-        });
-
-        const adminJsonContent = await adminResponse.json();
-        adminClient.setBearerToken(adminJsonContent.accessToken);
-        adminClient.setCookieToken(adminResponse.headers.get('set-cookie').split(';')[0].split('=')[1]);
-
-        const adminProtectedResponse = await adminClient.GET('/protected/admin/ping');
+        const admin_client = new ApiCaller();
+        await admin_client.ConnectAsAdmin(testAdmins[0].username);
+        const { res: adminProtectedResponse } = await admin_client.GET('/protected/admin/ping');
 
         if (adminProtectedResponse.status !== 200) {
             logger.error(`FAILED: Logged admin should be able to access protected routes`, adminProtectedResponse);
