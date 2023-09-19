@@ -4,9 +4,9 @@ import { cleanTestData, initData } from './utils.mjs';
 
 const TESTS_NAME = 'Logout';
 
-export default async () => {
+export default async prisma => {
     logger.startTest(TESTS_NAME);
-    const { testUsers, testAdmins } = await initData();
+    const { testUsers, testAdmins } = await initData(prisma);
 
     {
         /*
@@ -15,13 +15,13 @@ export default async () => {
         */
 
         const client_1 = new ApiCaller();
-        client_1.ConnectAsUser(testUsers[0].username);
+        await client_1.ConnectAsUser(testUsers[0].username);
         const client_2 = new ApiCaller();
-        client_2.ConnectAsUser(testUsers[0].username);
+        await client_2.ConnectAsUser(testUsers[0].username);
         const client_3 = new ApiCaller();
-        client_3.ConnectAsAdmin(testAdmins[0].username);
+        await client_3.ConnectAsAdmin(testAdmins[0].username);
         const client_4 = new ApiCaller();
-        client_4.ConnectAsAdmin(testAdmins[0].username);
+        await client_4.ConnectAsAdmin(testAdmins[0].username);
 
         const userRefreshError = client_1.getCookieToken() === client_2.getCookieToken();
         const userAccessError = client_1.getBearerToken() === client_2.getBearerToken();
@@ -55,12 +55,18 @@ export default async () => {
         const { res: client_3ProtectedRouteUnauthorized } = await client_3.GET('/protected/admin/ping');
 
         if (client_1ProtectedRouteUnauthorized.status !== 401) {
-            logger.error(`FAILED: Logout user by revoking accessToken with success`, res);
+            logger.error(
+                `FAILED: Logout user by revoking accessToken with success`,
+                client_1ProtectedRouteUnauthorized,
+            );
         } else {
             logger.success(`SUCCESS: Logout user by revoking accessToken with success`);
         }
         if (client_3ProtectedRouteUnauthorized.status !== 401) {
-            logger.error(`FAILED: Logout admin by revoking accessToken with success`, res);
+            logger.error(
+                `FAILED: Logout admin by revoking accessToken with success`,
+                client_3ProtectedRouteUnauthorized,
+            );
         } else {
             logger.success(`SUCCESS: Logout admin by revoking accessToken with success`);
         }
@@ -125,6 +131,6 @@ export default async () => {
         }
     }
 
-    await cleanTestData();
+    await cleanTestData(prisma);
     logger.finishTest(TESTS_NAME);
 };

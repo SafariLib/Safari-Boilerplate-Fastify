@@ -4,9 +4,9 @@ import { cleanTestData, initData } from './utils.mjs';
 
 const TESTS_NAME = 'login failure';
 
-export default async () => {
+export default async prisma => {
     logger.startTest(TESTS_NAME);
-    const { testUsers, testAdmins } = await initData();
+    const { testUsers, testAdmins } = await initData(prisma);
 
     {
         /*
@@ -45,6 +45,6 @@ export default async () => {
         }
     }
 
-    await cleanTestData();
+    await cleanTestData(prisma);
     logger.finishTest(TESTS_NAME);
 };

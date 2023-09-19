@@ -4,9 +4,9 @@ import { PASSWORD, cleanTestData, initData } from './utils.mjs';
 
 const TESTS_NAME = 'login';
 
-export default async () => {
+export default async prisma => {
     logger.startTest(TESTS_NAME);
-    const { testUsers, testAdmins } = await initData();
+    const { testUsers, testAdmins } = await initData(prisma);
     const API = new ApiCaller();
 
     {
@@ -40,6 +40,6 @@ export default async () => {
         }
     }
 
-    await cleanTestData();
+    await cleanTestData(prisma);
     logger.finishTest(TESTS_NAME);
 };

@@ -4,9 +4,9 @@ import { cleanTestData, initData } from './utils.mjs';
 
 const TESTS_NAME = 'Refreshing tokens';
 
-export default async () => {
+export default async prisma => {
     logger.startTest(TESTS_NAME);
-    const { testUsers, testAdmins } = await initData();
+    const { testUsers, testAdmins } = await initData(prisma);
 
     {
         /*
@@ -16,8 +16,8 @@ export default async () => {
         const admin_client = new ApiCaller();
         const user_client = new ApiCaller();
 
-        admin_client.ConnectAsAdmin(testAdmins[0].username);
-        user_client.ConnectAsUser(testUsers[0].username);
+        await admin_client.ConnectAsAdmin(testAdmins[0].username);
+        await user_client.ConnectAsUser(testUsers[0].username);
 
         // Access protected route
         const { res: adminProtectedRes } = await admin_client.GET('/protected/admin/ping');
@@ -73,6 +73,6 @@ export default async () => {
         }
     }
 
-    await cleanTestData();
+    await cleanTestData(prisma);
     logger.finishTest(TESTS_NAME);
 };

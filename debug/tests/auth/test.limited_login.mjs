@@ -4,9 +4,9 @@ import { cleanTestData, initData } from './utils.mjs';
 
 const TESTS_NAME = 'Login attempts';
 
-export default async () => {
+export default async prisma => {
     logger.startTest(TESTS_NAME);
-    const { testUsers, testAdmins } = await initData();
+    const { testUsers, testAdmins } = await initData(prisma);
 
     {
         /*
@@ -24,13 +24,13 @@ export default async () => {
         for (let i = 0; i < 5; i++) await user_client.ConnectAsUser(testUsers[0].username, 'Wrong_password8832');
         const userLogin = await user_client.ConnectAsUser(testUsers[0].username);
 
-        if (adminLogin.res.message !== 'USER_TOO_MANY_ATTEMPTS') {
-            logger.error(`FAILED: Admin login attempt successfully limited to 5 per 15min`, adminLogin.res.message);
+        if (adminLogin.json.message !== 'USER_TOO_MANY_ATTEMPTS') {
+            logger.error(`FAILED: Admin login attempt successfully limited to 5 per 15min`, adminLogin.json.message);
         } else {
             logger.success(`SUCCESS: Admin login attempt successfully limited to 5 per 15min`);
         }
-        if (userLogin.res.message !== 'USER_TOO_MANY_ATTEMPTS') {
-            logger.error(`FAILED: User login attempt successfully limited to 5 per 15min`, userLogin.res.message);
+        if (userLogin.json.message !== 'USER_TOO_MANY_ATTEMPTS') {
+            logger.error(`FAILED: User login attempt successfully limited to 5 per 15min`, userLogin.json.message);
         } else {
             logger.success(`SUCCESS: User login attempt successfully limited to 5 per 15min`);
         }
@@ -39,6 +39,6 @@ export default async () => {
         // I don't know how to fake ip address so I don't know how to test this
     }
 
-    await cleanTestData();
+    await cleanTestData(prisma);
     logger.finishTest(TESTS_NAME);
 };

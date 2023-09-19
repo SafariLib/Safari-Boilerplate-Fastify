@@ -10,7 +10,6 @@ export default class ApiCaller {
         this.DefaultPassword = constructor?.defaultPassword ?? 'P@ssw0rdTest123';
     }
 
-    // FIXME
     getBearerToken() {
         return this.HEADERS['Authorization']?.split(' ')[1];
     }
@@ -23,7 +22,6 @@ export default class ApiCaller {
         delete this.HEADERS['Authorization'];
     }
 
-    // FIXME
     getCookieToken() {
         return this.HEADERS['Cookie']?.split(';')[0].split('=')[1];
     }
@@ -134,8 +132,12 @@ export default class ApiCaller {
             method: 'GET',
             headers: this.HEADERS,
         });
-        const json = await res.json();
-        return { res, json };
+        try {
+            const json = await res.json();
+            return { res, json };
+        } catch {
+            return { res, json: null };
+        }
     }
 
     /**
