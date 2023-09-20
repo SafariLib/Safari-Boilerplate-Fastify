@@ -13,7 +13,7 @@ set /p "docker_network_name=Enter docker network name (24 char max): "
 if "!docker_network_name!"=="" (
     echo Docker network name cannot be empty, defaulting to safari_fastify
     set "docker_network_name=safari_fastify"
-) else if "!docker_network_name!.">24 (
+) else if "!docker_network_name!." GTR 24 (
     echo Docker network name cannot be more than 24 characters
     exit /b 1
 )
@@ -68,7 +68,7 @@ docker run -d ^
     -p 9229:9229 ^
     -p 5555:5555 ^
     --name "!images_tags[0]!" ^
-    -v ./:/app ^
+    -v .:/app ^
     "!images_tags[0]!"
 
 REM Prisma commands

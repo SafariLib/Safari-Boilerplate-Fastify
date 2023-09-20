@@ -13,7 +13,7 @@
         "docker:dev": "docker exec safari_fastify_server npm run dev",
         "docker:test": "docker exec safari_fastify_server npm run test",
         "docker:init:bash": "bash ./scripts/docker_init.sh",
-        "docker:init:batch": "cmd /c ./scripts/docker_init.bat"
+        "docker:init:batch": ".\\scripts\\docker_init.bat"
     },
     "dependencies": {
         "@fastify/cookie": "latest",
