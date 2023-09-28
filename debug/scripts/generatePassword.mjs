@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import getArgs from '../utils/getArgs.mjs';
+import getArgs from './getArgs.mjs';
 
 /*
     Usage:

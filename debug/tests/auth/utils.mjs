@@ -1,18 +1,17 @@
-import bcrypt from 'bcryptjs';
+import { generateDefaultPassword } from '../../utils/password.mjs';
 
-export const PASSWORD = 'P@ssw0rdTest123';
-export const HASHED_PASSWORD = bcrypt.hashSync(PASSWORD, 10);
+export const { password, hashedPassword } = generateDefaultPassword();
 
 export const ADMINS = ['test_admin'].map(username => ({
     username,
     email: `${username}@test.test`,
-    password: PASSWORD,
+    password,
 }));
 
 export const USERS = ['test_user'].map(username => ({
     username,
     email: `${username}@test.test`,
-    password: PASSWORD,
+    password,
 }));
 
 export const createTestData = async prisma => {
@@ -20,14 +19,14 @@ export const createTestData = async prisma => {
         data: USERS.map(user => ({
             ...user,
             role_id: 1,
-            password: HASHED_PASSWORD,
+            password: hashedPassword,
         })),
     });
     await prisma.admin.createMany({
         data: ADMINS.map(admin => ({
             ...admin,
             role_id: 1,
-            password: HASHED_PASSWORD,
+            password: hashedPassword,
         })),
     });
 };

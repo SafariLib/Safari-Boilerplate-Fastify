@@ -1,6 +1,6 @@
 import ApiCaller from '../../utils/ApiCaller.mjs';
 import logger from '../../utils/logger.mjs';
-import { PASSWORD, cleanTestData, initData } from './utils.mjs';
+import { cleanTestData, initData, password } from './utils.mjs';
 
 const TESTS_NAME = 'login';
 
@@ -17,7 +17,7 @@ export default async prisma => {
         for (const user of testUsers) {
             const { res } = await API.POST('/auth/login/user', {
                 username: user.username,
-                password: PASSWORD,
+                password,
             });
 
             if (res.status !== 200) {
@@ -29,7 +29,7 @@ export default async prisma => {
         for (const admin of testAdmins) {
             const { res } = await API.POST('/auth/login/admin', {
                 username: admin.username,
-                password: PASSWORD,
+                password,
             });
 
             if (res.status !== 200) {

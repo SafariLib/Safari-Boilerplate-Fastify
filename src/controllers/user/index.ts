@@ -24,7 +24,14 @@ export default async (fastify: FastifyInstance) => {
                     },
                 });
 
-                reply.code(200).send(users);
+                reply.code(200).send(
+                    users.map(user => ({
+                        avatarUrl: user?.avatar_url,
+                        createdAt: user?.created_at,
+                        updatedAt: user?.updated_at,
+                        ...user,
+                    })),
+                );
             } catch (e) {
                 reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
             }
@@ -55,7 +62,12 @@ export default async (fastify: FastifyInstance) => {
                     },
                 });
 
-                reply.code(200).send(user);
+                reply.code(200).send({
+                    avatarUrl: user?.avatar_url,
+                    createdAt: user?.created_at,
+                    updatedAt: user?.updated_at,
+                    ...user,
+                });
             } catch (e) {
                 reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
             }

@@ -44,10 +44,22 @@ export const loginSchema: FastifySchema = {
 
 export const logoutSchema: FastifySchema = {
     tags: ['Authentication'],
+    headers: {
+        type: 'object',
+        properties: {
+            authorization: { type: 'string' },
+        },
+    },
 };
 
 export const refreshSchema: FastifySchema = {
     tags: ['Authentication'],
+    headers: {
+        type: 'object',
+        properties: {
+            authorization: { type: 'string' },
+        },
+    },
     response: {
         200: {
             type: 'object',
