@@ -3,6 +3,10 @@
 List of all API error codes.
 | Code | Description |
 | ------------------------- | --------------------------------------------------------------------------- |
+| `FILTER_MALFORMED_DATE` | Provided date format is malformed. |
+| `PAGINATION_LIMIT_EXCEEDED` | Pagination parameters exceeds server limitations. |
+| `PAGINATION_MALFORMED` | Pagination parameters malformed. |
+| `ENTITY_NOT_FOUND` | Requested entity not found. |
 | `USER_NOT_FOUND` | User connection failed as provided credentials does not exists in database. |
 | `USER_REVOKED` | User connection failed as user's state is currently **revoked**. |
 | `USER_INCORRECT_PASSWORD` | User connection failed as provided password does not match. |

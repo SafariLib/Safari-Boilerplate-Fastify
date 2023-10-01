@@ -2,9 +2,6 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 (async () => {
-    // -----------------------------
-    //          AUTH TESTS
-    // -----------------------------
     const authTests = [
         (await import('./tests/auth/test.login_success_call.mjs')).default,
         (await import('./tests/auth/test.login_fail_call.mjs')).default,
@@ -15,9 +12,12 @@ const prisma = new PrismaClient();
         (await import('./tests/auth/test.limited_login.mjs')).default,
     ];
 
+    const userTests = [(await import('./tests/user/test.get_user.mjs')).default];
+
     try {
         await prisma.$connect();
-        for (const test of authTests) await test(prisma);
+        // for (const test of authTests) await test(prisma);
+        for (const test of userTests) await test(prisma);
     } catch (e) {
         throw e;
     } finally {

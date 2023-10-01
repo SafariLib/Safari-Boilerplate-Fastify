@@ -1,5 +1,27 @@
 import type { FastifySchema } from 'fastify';
 
+const roleSchema = {
+    type: 'object',
+    properties: {
+        id: { type: 'number' },
+        name: { type: 'string' },
+    },
+};
+
+const userSchema = {
+    type: 'object',
+    properties: {
+        id: { type: 'number' },
+        username: { type: 'string' },
+        email: { type: 'string' },
+        role: roleSchema,
+        avatarUrl: { type: 'string' },
+        revoked: { type: 'boolean' },
+        createdAt: { type: 'string' },
+        updatedAt: { type: 'string' },
+    },
+};
+
 export const getUsers: FastifySchema = {
     tags: ['Admin - users'],
     headers: {
@@ -8,22 +30,25 @@ export const getUsers: FastifySchema = {
             authorization: { type: 'string' },
         },
     },
+    querystring: {
+        type: 'object',
+        properties: {
+            page: { type: 'number' },
+            limit: { type: 'number' },
+            username: { type: 'string' },
+            email: { type: 'string' },
+            role: { type: 'string' },
+            revoked: { type: 'boolean' },
+            created_after: { type: 'string' },
+            created_before: { type: 'string' },
+            updated_after: { type: 'string' },
+            updated_before: { type: 'string' },
+        },
+    },
     response: {
         200: {
             type: 'array',
-            items: {
-                type: 'object',
-                properties: {
-                    id: { type: 'number' },
-                    username: { type: 'string' },
-                    email: { type: 'string' },
-                    role: { type: 'string' },
-                    avatarUrl: { type: 'string' },
-                    revoked: { type: 'boolean' },
-                    createdAt: { type: 'string' },
-                    updatedAt: { type: 'string' },
-                },
-            },
+            items: userSchema,
         },
     },
 };
@@ -43,18 +68,6 @@ export const getUserById: FastifySchema = {
         },
     },
     response: {
-        200: {
-            type: 'object',
-            properties: {
-                id: { type: 'number' },
-                username: { type: 'string' },
-                email: { type: 'string' },
-                role: { type: 'string' },
-                avatarUrl: { type: 'string' },
-                revoked: { type: 'boolean' },
-                createdAt: { type: 'string' },
-                updatedAt: { type: 'string' },
-            },
-        },
+        200: userSchema,
     },
 };

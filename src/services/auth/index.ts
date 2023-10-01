@@ -5,7 +5,7 @@ import { randomUUID } from 'crypto';
 import type { FastifyPluginCallback, FastifyRequest as Request } from 'fastify';
 import plugin from 'fastify-plugin';
 
-export interface UserToConnect {
+interface UserToConnect {
     id: number;
     username: string;
     email: string;
@@ -17,8 +17,8 @@ export interface UserToConnect {
     createdAt: Date;
     updatedAt: Date;
 }
-export type ConnectedUser = Omit<UserToConnect, 'password' | 'isRevoked'>;
-export interface LoginAttempt {
+type ConnectedUser = Omit<UserToConnect, 'password' | 'isRevoked'>;
+interface LoginAttempt {
     userId: number;
     ip: string;
     createdAt: Date;

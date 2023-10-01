@@ -1,11 +1,11 @@
 import type { FastifyPluginCallback } from 'fastify';
 import plugin from 'fastify-plugin';
 
-export type GetOrSetSecret = (userId: number) => Promise<string>;
-export type SetUserToken = (token: string, userId: number) => Promise<void>;
-export type GetUserSecret = (token: string) => Promise<string | null>;
-export type DeleteUserCache = (userId: number) => Promise<void>;
-export type DeleteUserToken = (token: string) => Promise<void>;
+type GetOrSetSecret = (userId: number) => Promise<string>;
+type SetUserToken = (token: string, userId: number) => Promise<void>;
+type GetUserSecret = (token: string) => Promise<string | null>;
+type DeleteUserCache = (userId: number) => Promise<void>;
+type DeleteUserToken = (token: string) => Promise<void>;
 
 export default plugin((async (fastify, opts, done) => {
     if (fastify.hasDecorator('cacheService')) return done();
