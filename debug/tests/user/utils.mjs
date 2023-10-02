@@ -23,6 +23,11 @@ export const USER_ROLES = [
     },
 ];
 
+export const tomorrow = new Date(Date.now() + 1000 * 60 * 60 * 24);
+export const yesterday = new Date(Date.now() - 1000 * 60 * 60 * 24);
+export const nextWeek = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
+export const lastWeek = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
+
 export const createTestData = async prisma => {
     await prisma.admin.create({ data: { ...ADMIN, password: hashedPassword } });
     await prisma.userRole.createMany({ data: USER_ROLES });
@@ -35,6 +40,21 @@ export const createTestData = async prisma => {
             ...user,
             password: hashedPassword,
             role_id: index % 2 === 0 ? testRoles[0].id : 1,
+            revoked: index % 3 === 0,
+            created_at: index % 4 === 0 
+                ? tomorrow
+                : index % 4 === 1
+                    ? yesterday
+                    : index % 4 === 2
+                        ? nextWeek
+                        : lastWeek,
+            updated_at: index % 4 === 0 
+                ? tomorrow
+                : index % 4 === 1
+                    ? yesterday
+                    : index % 4 === 2
+                        ? nextWeek
+                        : lastWeek,
         })),
     });
 };
@@ -48,6 +68,11 @@ export const cleanTestData = async prisma => {
 export const getUsersIds = async prisma => {
     const users = await prisma.user.findMany({ select: { id: true } });
     return users.map(({ id }) => id);
+};
+
+export const getAdminsIds = async prisma => {
+    const admins = await prisma.admin.findMany({ select: { id: true } });
+    return admins.map(({ id }) => id);
 };
 
 export const initData = async prisma => {

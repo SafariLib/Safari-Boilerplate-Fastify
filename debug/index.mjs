@@ -16,7 +16,7 @@ const prisma = new PrismaClient();
 
     try {
         await prisma.$connect();
-        // for (const test of authTests) await test(prisma);
+        for (const test of authTests) await test(prisma);
         for (const test of userTests) await test(prisma);
     } catch (e) {
         throw e;

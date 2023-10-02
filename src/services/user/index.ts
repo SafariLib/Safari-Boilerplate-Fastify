@@ -34,7 +34,9 @@ type GetPaginatedUsers = (page: number, limit: number, filters?: GetPaginatedUse
 export default plugin((async (fastify, opts, done) => {
     if (fastify.hasDecorator('userService')) return done();
 
-    const selectUserQuery = Prisma.sql`
+    const { sql, empty: sqlEmpty, join: sqlJoin } = Prisma;
+
+    const selectUserQuery = sql`
         SELECT
             u.id,
             u.username,
@@ -45,6 +47,19 @@ export default plugin((async (fastify, opts, done) => {
             u.updated_at as "updatedAt",
             json_build_object('id', u.role_id, 'name', r.name) AS role
         FROM "User" u INNER JOIN "UserRole" r ON u.role_id = r.id
+    `;
+
+    const selectAdminQuery = sql`
+        SELECT
+            u.id,
+            u.username,
+            u.email,
+            u.avatar_url as "avatarUrl",
+            u.revoked,
+            u.created_at as "createdAt",
+            u.updated_at as "updatedAt",
+            json_build_object('id', u.role_id, 'name', r.name) AS role
+        FROM "Admin" u INNER JOIN "AdminRole" r ON u.role_id = r.id
     `;
 
     const dateFilters = ['created_after', 'created_before', 'updated_after', 'updated_before'];
@@ -63,11 +78,26 @@ export default plugin((async (fastify, opts, done) => {
     };
 
     /**
+     * Find an admin by its id
+     * @param id The admin id
+     * @throws ENTITY_NOT_FOUND
+     */
+    const getAdminById: GetUserById = async id => {
+        const admin = await fastify.prisma.$queryRaw<Array<GetAdmin>>`
+            ${selectAdminQuery} WHERE u.id = ${Number(id)};
+        `;
+        if (!admin.length) throw { status: 404, errorCode: 'ENTITY_NOT_FOUND' };
+        return admin[0];
+    };
+
+    /**
      * Find many users with pagination and filters
      * @param page The page number
      * @param limit The page limit
      * @param filters The filters
-     * @throws UNAUTHORIZED_OPERATION
+     * @throws PAGINATION_MALFORMED
+     * @throws PAGINATION_LIMIT_EXCEEDED
+     * @throws FILTER_MALFORMED_DATE
      */
     const getPaginatedUsers: GetPaginatedUsers = async (page, limit, filters) => {
         if (page < 0 || limit < 0) throw { status: 400, errorCode: 'PAGINATION_MALFORMED' };
@@ -75,48 +105,127 @@ export default plugin((async (fastify, opts, done) => {
 
         const { username, email, ...rest } = filters ?? {};
 
-        // FIXME : this breaks
         if (username) {
             const user = await fastify.prisma.$queryRaw<Array<GetUser>>`
-                ${selectUserQuery} WHERE u.username LIKE %${username.toLowerCase()}%;
+                ${selectUserQuery} WHERE lower(u.username) 
+                LIKE lower(\'%\' || ${username} || \'%\')
+                OFFSET ${page * limit}
+                LIMIT ${limit};
             `;
             return !user ? [] : user;
         }
         if (email) {
             const user = await fastify.prisma.$queryRaw<Array<GetUser>>`
-                ${selectUserQuery} WHERE u.email LIKE %${email.toLowerCase()}%;
+                ${selectUserQuery} WHERE lower(u.email) 
+                LIKE lower(\'%\' || ${email} || \'%\')
+                OFFSET ${page * limit}
+                LIMIT ${limit};
             `;
             return !user ? [] : user;
         }
 
-        const where = Array<Prisma.Sql>();
-        Object.entries(rest).forEach(([key, value]) => {
-            if (key === 'role') {
-                typeof value === 'string' && where.push(Prisma.sql`r.name = ${value}`);
-            } else if (key === 'revoked') {
-                typeof value === 'boolean' && where.push(Prisma.sql`u.revoked = ${value}`);
-            } else if (dateFilters.includes(key)) {
-                const date = (() => {
-                    const v = new Date(value as string);
-                    if (v.toString() === 'Invalid Date') throw { status: 400, errorCode: 'FILTER_MALFORMED_DATE' };
-                    return v;
-                })();
+        const where = (() => {
+            const queries = Object.entries(rest).map(([key, value]) => {
+                if (key === 'role' && typeof value === 'string') {
+                    return sql`r.name = ${value}`;
+                } else if (key === 'revoked' && typeof value === 'boolean') {
+                    return sql`u.revoked = ${value}`;
+                } else if (dateFilters.includes(key)) {
+                    const date = (() => {
+                        const v = new Date(value as string);
+                        if (v.toString() === 'Invalid Date') throw { status: 400, errorCode: 'FILTER_MALFORMED_DATE' };
+                        return v;
+                    })();
 
-                if (key === 'created_after') {
-                    where.push(Prisma.sql`u.created_at >= ${date}`);
-                } else if (key === 'created_before') {
-                    where.push(Prisma.sql`u.created_at <= ${date}`);
-                } else if (key === 'updated_after') {
-                    where.push(Prisma.sql`u.updated_at >= ${date}`);
-                } else if (key === 'updated_before') {
-                    where.push(Prisma.sql`u.updated_at <= ${date}`);
+                    if (key === 'created_after') {
+                        return sql`u.created_at >= ${date}`;
+                    } else if (key === 'created_before') {
+                        return sql`u.created_at <= ${date}`;
+                    } else if (key === 'updated_after') {
+                        return sql`u.updated_at >= ${date}`;
+                    } else if (key === 'updated_before') {
+                        return sql`u.updated_at <= ${date}`;
+                    }
                 }
-            }
-        });
+            });
+
+            return queries.length ? sql`${sqlJoin(queries, ' AND ', 'WHERE ')}` : sqlEmpty;
+        })();
 
         return await fastify.prisma.$queryRaw<Array<GetUser>>`
             ${selectUserQuery}
-            ${where.length ? Prisma.join(where, ' AND ', ' WHERE ') : Prisma.empty}
+            ${where}
+            ORDER BY u.id ASC
+            OFFSET ${page * limit}
+            LIMIT ${limit};
+        `;
+    };
+
+    /**
+     * Find many admins with pagination and filters
+     * @param page The page number
+     * @param limit The page limit
+     * @param filters The filters
+     * @throws PAGINATION_MALFORMED
+     * @throws PAGINATION_LIMIT_EXCEEDED
+     * @throws FILTER_MALFORMED_DATE
+     */
+    const getPaginatedAdmins: GetPaginatedUsers = async (page, limit, filters) => {
+        if (page < 0 || limit < 0) throw { status: 400, errorCode: 'PAGINATION_MALFORMED' };
+        if (limit > 100) throw { status: 400, errorCode: 'PAGINATION_LIMIT_EXCEEDED' };
+
+        const { username, email, ...rest } = filters ?? {};
+
+        if (username) {
+            const admin = await fastify.prisma.$queryRaw<Array<GetAdmin>>`
+                ${selectAdminQuery} WHERE lower(u.username) 
+                LIKE lower(\'%\' || ${username} || \'%\')
+                OFFSET ${page * limit}
+                LIMIT ${limit};
+            `;
+            return !admin ? [] : admin;
+        }
+        if (email) {
+            const admin = await fastify.prisma.$queryRaw<Array<GetAdmin>>`
+                ${selectAdminQuery} WHERE lower(u.email) 
+                LIKE lower(\'%\' || ${email} || \'%\')
+                OFFSET ${page * limit}
+                LIMIT ${limit};
+            `;
+            return !admin ? [] : admin;
+        }
+
+        const where = (() => {
+            const queries = Object.entries(rest).map(([key, value]) => {
+                if (key === 'role' && typeof value === 'string') {
+                    return sql`r.name = ${value}`;
+                } else if (key === 'revoked' && typeof value === 'boolean') {
+                    return sql`u.revoked = ${value}`;
+                } else if (dateFilters.includes(key)) {
+                    const date = (() => {
+                        const v = new Date(value as string);
+                        if (v.toString() === 'Invalid Date') throw { status: 400, errorCode: 'FILTER_MALFORMED_DATE' };
+                        return v;
+                    })();
+
+                    if (key === 'created_after') {
+                        return sql`u.created_at >= ${date}`;
+                    } else if (key === 'created_before') {
+                        return sql`u.created_at <= ${date}`;
+                    } else if (key === 'updated_after') {
+                        return sql`u.updated_at >= ${date}`;
+                    } else if (key === 'updated_before') {
+                        return sql`u.updated_at <= ${date}`;
+                    }
+                }
+            });
+
+            return queries.length ? sql`${sqlJoin(queries, ' AND ', 'WHERE ')}` : sqlEmpty;
+        })();
+
+        return await fastify.prisma.$queryRaw<Array<GetAdmin>>`
+            ${selectAdminQuery}
+            ${where}
             ORDER BY u.id ASC
             OFFSET ${page * limit}
             LIMIT ${limit};
@@ -126,6 +235,8 @@ export default plugin((async (fastify, opts, done) => {
     fastify.decorate('userService', {
         getUserById,
         getPaginatedUsers,
+        getAdminById,
+        getPaginatedAdmins,
     });
     done();
 }) as FastifyPluginCallback);
@@ -133,6 +244,8 @@ export default plugin((async (fastify, opts, done) => {
 interface UserService {
     getUserById: GetUserById;
     getPaginatedUsers: GetPaginatedUsers;
+    getAdminById: GetUserById;
+    getPaginatedAdmins: GetPaginatedUsers;
 }
 
 declare module 'fastify' {
