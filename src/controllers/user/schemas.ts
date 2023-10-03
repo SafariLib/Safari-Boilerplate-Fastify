@@ -1,5 +1,19 @@
 import type { FastifySchema } from 'fastify';
 
+const protectedSchema = {
+    type: 'object',
+    properties: {
+        authorization: { type: 'string' },
+    },
+};
+
+const selectByIdSchema = {
+    type: 'object',
+    properties: {
+        id: { type: 'number' },
+    },
+};
+
 const roleSchema = {
     type: 'object',
     properties: {
@@ -25,12 +39,7 @@ const userSchema = {
 export const getUsers: FastifySchema = {
     tags: ['Admin - users'],
     description: 'Get a paginated list of users, default limit is 10, default page is 0.',
-    headers: {
-        type: 'object',
-        properties: {
-            authorization: { type: 'string' },
-        },
-    },
+    headers: protectedSchema,
     querystring: {
         type: 'object',
         properties: {
@@ -56,18 +65,28 @@ export const getUsers: FastifySchema = {
 
 export const getUserById: FastifySchema = {
     tags: ['Admin - users'],
-    headers: {
-        type: 'object',
-        properties: {
-            authorization: { type: 'string' },
-        },
+    headers: protectedSchema,
+    params: selectByIdSchema,
+    response: {
+        200: userSchema,
     },
-    params: {
-        type: 'object',
-        properties: {
-            id: { type: 'number' },
-        },
+};
+
+export const revokeUser: FastifySchema = {
+    tags: ['Admin - users'],
+    description: 'Revoke a user/admin.',
+    headers: protectedSchema,
+    params: selectByIdSchema,
+    response: {
+        200: userSchema,
     },
+};
+
+export const activateUser: FastifySchema = {
+    tags: ['Admin - users'],
+    description: 'Activate a user/admin.',
+    headers: protectedSchema,
+    params: selectByIdSchema,
     response: {
         200: userSchema,
     },

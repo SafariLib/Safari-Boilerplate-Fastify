@@ -1,7 +1,8 @@
+import { AccessRights } from '@services/auth/types';
+import { adminPrefix } from '@utils';
 import type { FastifyInstance, FastifyReply as Reply, FastifyRequest as Request } from 'fastify';
-import { adminPrefix } from '../../utils';
 import { getUserById, getUsers } from './schemas';
-import { GetPaginatedUsersPayload, GetUserByIdPayload } from './types';
+import type { GetPaginatedUsersPayload, GetUserByIdPayload } from './types';
 
 export default async (fastify: FastifyInstance) => {
     fastify.route({
@@ -62,6 +63,24 @@ export default async (fastify: FastifyInstance) => {
             try {
                 const admin = await userService.getAdminById(Number(id));
                 reply.code(200).send(admin);
+            } catch (e) {
+                reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
+            }
+        },
+    });
+
+    fastify.route({
+        method: 'PUT',
+        url: `${adminPrefix}/user/:id/revoke`,
+        schema: getUserById,
+        handler: async (request: Request<GetUserByIdPayload>, reply: Reply) => {
+            const { revokeUser, checkAdminAccessRights } = fastify.authService;
+            const { id } = request.params;
+            checkAdminAccessRights([AccessRights.RevokeUser]);
+
+            try {
+                const user = await revokeUser(Number(id));
+                reply.code(200).send(user);
             } catch (e) {
                 reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
             }

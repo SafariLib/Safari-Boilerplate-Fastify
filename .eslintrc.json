@@ -11,7 +11,6 @@
         "@typescript-eslint/prefer-for-of": "warn",
         "@typescript-eslint/no-empty-function": "warn",
         "@typescript-eslint/no-empty-interface": "warn",
-        "@typescript-eslint/consistent-type-exports": "error",
         "@typescript-eslint/consistent-type-imports": "warn",
         "@typescript-eslint/no-namespace": "off",
         "@typescript-eslint/no-unused-vars": [

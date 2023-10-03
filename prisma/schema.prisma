@@ -46,6 +46,7 @@ model AdminRole {
   id         Int       @id @default(autoincrement())
   name       String    @unique @db.VarChar(32)
   is_default Boolean   @default(false)
+  rights     Int[]
   created_at DateTime  @default(now())
   updated_at DateTime?
   @@map("AdminRole")

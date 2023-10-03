@@ -1,43 +1,20 @@
-import { TokenContent } from '@plugins/jsonWebToken';
+import type { TokenContent } from '@plugins/jsonWebToken';
 import { Prisma } from '@prisma/client';
 import { retry } from '@utils';
 import { randomUUID } from 'crypto';
 import type { FastifyPluginCallback, FastifyRequest as Request } from 'fastify';
 import plugin from 'fastify-plugin';
-
-interface UserToConnect {
-    id: number;
-    username: string;
-    email: string;
-    password: string;
-    avatarUrl?: string;
-    roleId: number;
-    roleName: string;
-    isRevoked: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-}
-type ConnectedUser = Omit<UserToConnect, 'password' | 'isRevoked'>;
-interface LoginAttempt {
-    userId: number;
-    ip: string;
-    createdAt: Date;
-}
-interface LoginAttemptState {
-    userAttempts: Array<LoginAttempt>;
-    adminAttempts: Array<LoginAttempt>;
-    cleanState: () => void;
-}
-
-type HasTooManyAttemps = (userId: number, ip: string, entity: Entity) => boolean;
-type LogAttempt = (userId: number, ip: string, entity: Entity) => void;
-type Login = (
-    username: string,
-    password: string,
-    ip: string,
-) => Promise<{ user: ConnectedUser; refreshToken: string; accessToken: string }>;
-
-type Entity = 'ADMIN' | 'USER';
+import type {
+    AccessRights,
+    CheckAdminAccessRights,
+    ConnectedUser,
+    Entity,
+    HasTooManyAttemps,
+    LogAttempt,
+    Login,
+    LoginAttemptState,
+    UserToConnect,
+} from './types';
 
 export default plugin((async (fastify, opts, done) => {
     if (fastify.hasDecorator('authService')) return done();
@@ -49,6 +26,20 @@ export default plugin((async (fastify, opts, done) => {
     const getAccessToken = () => fastify.jsonWebToken.tokens.access?.token;
     const getRefreshToken = () => fastify.jsonWebToken.tokens.refresh?.token;
     const getUserIp = (request: Request) => request.headers.ip as string;
+
+    const getAdminAccessRights = async () => {
+        const { jsonWebToken, prisma } = fastify;
+        const { rights } = await prisma.adminRole.findUnique({
+            where: { id: jsonWebToken.tokens.access.content.role },
+            select: { rights: true },
+        });
+        return rights as Array<AccessRights>;
+    };
+
+    const checkAdminAccessRights: CheckAdminAccessRights = async rights => {
+        const adminRights = await getAdminAccessRights();
+        if (!rights.every(right => adminRights.includes(right))) throw { errorCode: 'ACCESS_DENIED', status: 403 };
+    };
 
     /**
      * The login attempt state
@@ -136,14 +127,15 @@ export default plugin((async (fastify, opts, done) => {
     };
 
     /**
-     * Revoke a user state in database
-     * @param userId The user id to revoke
+     * Sets revoke state of a user/admin in database
+     * @param userId The user id to revoke/activate
+     * @param revoke The revoke state
      * @param entity The entity type
      */
-    const revokeUser = async (userId: number, entity: 'ADMIN' | 'USER') => {
+    const setUserRevokeState = async (userId: number, revoke: boolean, entity: 'ADMIN' | 'USER') => {
         await fastify.prisma.$executeRaw`
             UPDATE ${entity === 'ADMIN' ? Prisma.sql`"User"` : Prisma.sql`"Customer"`}
-            SET revoked = true
+            SET revoked = ${revoke}
             WHERE id = ${userId};
         `;
     };
@@ -329,14 +321,17 @@ export default plugin((async (fastify, opts, done) => {
         logoutAdmin: async () => logout('ADMIN'),
         logoutAllUser: async () => logoutAll('USER'),
         logoutAllAdmin: async () => logoutAll('ADMIN'),
-        revokeUser: async (userId: number) => revokeUser(userId, 'USER'),
-        revokeAdmin: async (userId: number) => revokeUser(userId, 'ADMIN'),
+        revokeUser: async (userId: number) => setUserRevokeState(userId, true, 'USER'),
+        revokeAdmin: async (userId: number) => setUserRevokeState(userId, true, 'ADMIN'),
+        activateUser: async (userId: number) => setUserRevokeState(userId, false, 'USER'),
+        activateAdmin: async (userId: number) => setUserRevokeState(userId, false, 'ADMIN'),
         verifyUserRefreshToken: async (request: Request) => verifyRefreshToken(request, 'USER'),
         verifyAdminRefreshToken: async (request: Request) => verifyRefreshToken(request, 'ADMIN'),
         refreshUserTokens: async () => refreshTokens('USER'),
         refreshAdminTokens: async () => refreshTokens('ADMIN'),
         isAdmin,
         isUser,
+        checkAdminAccessRights,
         getUserId,
         getAccessToken,
         getRefreshToken,
@@ -358,8 +353,11 @@ interface AuthService {
     refreshAdminTokens: () => Promise<{ user: ConnectedUser; refreshToken: string; accessToken: string }>;
     revokeUser: (userId: number) => Promise<void>;
     revokeAdmin: (userId: number) => Promise<void>;
+    activateUser: (userId: number) => Promise<void>;
+    activateAdmin: (userId: number) => Promise<void>;
     isAdmin: () => boolean;
     isUser: () => boolean;
+    checkAdminAccessRights: CheckAdminAccessRights;
     getUserId: () => number;
     getAccessToken: () => string;
     getRefreshToken: () => string;

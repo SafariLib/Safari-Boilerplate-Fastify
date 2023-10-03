@@ -10,7 +10,7 @@ List of all API error codes.
 | `USER_NOT_FOUND` | User connection failed as provided credentials does not exists in database. |
 | `USER_REVOKED` | User connection failed as user's state is currently **revoked**. |
 | `USER_INCORRECT_PASSWORD` | User connection failed as provided password does not match. |
-| `AUTH_HEADERS_EMPTY` | Request authorization headers are empty. |
+| `ADMIN_ACCESS_DENIED` | Current Administrator hasn't the correct rights to access this feature. |
 | `AUTH_TOO_MANY_ATTEMPTS` | More than 5 failed login attempts in the last 15 minutes. |
 | `AUTH_COOKIE_EMPTY` | Request authorization cookie is empty. |
 | `AUTH_COOKIE_INVALID` | Request authorization cookie decryption failed. |
