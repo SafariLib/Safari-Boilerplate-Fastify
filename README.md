@@ -4,6 +4,7 @@
 </p>
 <h1 align="center">Safari Fastify Boilerplate</h1>
 
+[![license](https://img.shields.io/badge/SafariLib-yellow.svg)](https://github.com/safariLib)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 Boilerplate for Rest API development.
@@ -28,3 +29,7 @@ Boilerplate for Rest API development.
 ### Error codes
 
 -   [API Error codes](./doc/api_error_codes.md)
+
+### Debug Tools
+
+-   [**VSCode plugin:** Thunder Client](https://github.com/rangav/thunder-client-support)
