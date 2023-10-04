@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { createInterface } from 'readline';
 import getArgs from './getArgs.mjs';
 
 /*
@@ -18,11 +19,29 @@ import getArgs from './getArgs.mjs';
 const args = getArgs();
 
 (async () => {
-    const salt = await bcrypt.genSalt(10 || args.salt);
-    const hash = await bcrypt.hash(args.psw, salt);
+    const psw =
+        args.psw ??
+        (await (async () => {
+            const promise = new Promise(resolve => {
+                const readline = createInterface({
+                    input: process.stdin,
+                    output: process.stdout,
+                });
 
-    console.log('Requested password:');
-    console.log(args.psw);
+                readline.question('Password: ', psw => {
+                    readline.close();
+                    resolve(psw);
+                });
+            });
+
+            return await promise;
+        })());
+
+    const salt = await bcrypt.genSalt(args?.salt ? Number(args.salt) : 10);
+    const hash = await bcrypt.hash(psw, salt);
+
+    console.log();
     console.log('Hashed password:');
     console.log('\x1b[42m\x1b[37m%s\x1b[0m', hash);
+    console.log();
 })();

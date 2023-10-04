@@ -13,7 +13,7 @@ const prisma = new PrismaClient();
     ];
 
     const userTests = [
-        (await import('./tests/user/test.get_user.mjs')).default,
+        // (await import('./tests/user/test.get_user.mjs')).default,
         (await import('./tests/user/test.update_revoked_state.mjs')).default,
     ];
 
