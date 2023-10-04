@@ -1,4 +1,4 @@
-import ApiCaller from '../../utils/ApiCaller.mjs';
+import HTTPClient from '../../utils/API/HTTPClient.mjs';
 import logger from '../../utils/logger.mjs';
 import { cleanTestData, initData } from './utils.mjs';
 
@@ -13,8 +13,8 @@ export default async prisma => {
             Login user and try to refresh tokens
         */
 
-        const admin_client = new ApiCaller();
-        const user_client = new ApiCaller();
+        const admin_client = new HTTPClient();
+        const user_client = new HTTPClient();
 
         await admin_client.ConnectAsAdmin(testAdmins[0].username);
         await user_client.ConnectAsUser(testUsers[0].username);

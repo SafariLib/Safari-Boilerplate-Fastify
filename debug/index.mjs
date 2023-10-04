@@ -12,7 +12,10 @@ const prisma = new PrismaClient();
         (await import('./tests/auth/test.limited_login.mjs')).default,
     ];
 
-    const userTests = [(await import('./tests/user/test.get_user.mjs')).default];
+    const userTests = [
+        (await import('./tests/user/test.get_user.mjs')).default,
+        (await import('./tests/user/test.update_revoked_state.mjs')).default,
+    ];
 
     try {
         await prisma.$connect();

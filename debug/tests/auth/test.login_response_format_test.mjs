@@ -1,4 +1,4 @@
-import ApiCaller from '../../utils/ApiCaller.mjs';
+import HTTPClient from '../../utils/API/HTTPClient.mjs';
 import logger from '../../utils/logger.mjs';
 import { cleanTestData, initData } from './utils.mjs';
 
@@ -14,7 +14,7 @@ export default async prisma => {
         */
 
         // Tests for user
-        const user_client = new ApiCaller();
+        const user_client = new HTTPClient();
         const { res: userRes, json: userJson } = await user_client.ConnectAsUser(testUsers[0].username);
 
         if (userJson.user?.password !== undefined) {
@@ -38,7 +38,7 @@ export default async prisma => {
         }
 
         // Tests for admin
-        const user_admin = new ApiCaller();
+        const user_admin = new HTTPClient();
         const { res: adminRes, json: adminJson } = await user_client.ConnectAsAdmin(testAdmins[0].username);
 
         if (adminJson.user?.password !== undefined) {

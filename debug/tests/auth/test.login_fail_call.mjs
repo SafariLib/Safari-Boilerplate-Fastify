@@ -1,4 +1,4 @@
-import ApiCaller from '../../utils/ApiCaller.mjs';
+import HTTPClient from '../../utils/API/HTTPClient.mjs';
 import logger from '../../utils/logger.mjs';
 import { cleanTestData, initData } from './utils.mjs';
 
@@ -13,8 +13,8 @@ export default async prisma => {
             Login should fail
         */
 
-        const user_client = new ApiCaller();
-        const admin_client = new ApiCaller();
+        const user_client = new HTTPClient();
+        const admin_client = new HTTPClient();
 
         const { res: userRes, userJson } = await user_client.ConnectAsUser(testUsers[0].username, 'wrong password');
         if (userRes.status !== 401 && userJson.message !== 'USER_INCORRECT_PASSWORD') {

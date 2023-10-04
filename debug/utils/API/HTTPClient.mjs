@@ -1,13 +1,14 @@
 import { fetch } from 'undici';
+import { DEFAULT_PASSWORD } from '../password.mjs';
 
-export default class ApiCaller {
+export default class HTTPClient {
     constructor(constructor) {
         this.BASE_URL = constructor?.targetUrl ?? 'http://localhost:8080';
         this.HEADERS = {
             'Content-Type': constructor?.contentType ?? 'application/json',
             'User-Agent': constructor?.userAgent ?? 'SAFARI TEST',
         };
-        this.DefaultPassword = constructor?.defaultPassword ?? 'P@ssw0rdTest123';
+        this.DefaultPassword = constructor?.defaultPassword ?? DEFAULT_PASSWORD;
     }
 
     getBearerToken() {
@@ -41,6 +42,16 @@ export default class ApiCaller {
     setUserAgent(userAgent) {
         this.HEADERS['User-Agent'] = userAgent;
     }
+
+    testUserRevokedState = async () => {
+        const { res } = await this.GET(`/protected/ping`);
+        return res.status === 200;
+    };
+
+    testAdminRevokedState = async () => {
+        const { res } = await this.GET(`/protected/admin/ping`);
+        return res.status === 200;
+    };
 
     /**
      * Connects to the API as a user

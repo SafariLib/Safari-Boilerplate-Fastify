@@ -1,4 +1,4 @@
-import ApiCaller from '../../utils/ApiCaller.mjs';
+import HTTPClient from '../../utils/API/HTTPClient.mjs';
 import logger from '../../utils/logger.mjs';
 import { cleanTestData, initData } from './utils.mjs';
 
@@ -14,13 +14,13 @@ export default async prisma => {
             Logout of one client should revoke only one token
         */
 
-        const client_1 = new ApiCaller();
+        const client_1 = new HTTPClient();
         await client_1.ConnectAsUser(testUsers[0].username);
-        const client_2 = new ApiCaller();
+        const client_2 = new HTTPClient();
         await client_2.ConnectAsUser(testUsers[0].username);
-        const client_3 = new ApiCaller();
+        const client_3 = new HTTPClient();
         await client_3.ConnectAsAdmin(testAdmins[0].username);
-        const client_4 = new ApiCaller();
+        const client_4 = new HTTPClient();
         await client_4.ConnectAsAdmin(testAdmins[0].username);
 
         const userRefreshError = client_1.getCookieToken() === client_2.getCookieToken();

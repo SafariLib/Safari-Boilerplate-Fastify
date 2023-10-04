@@ -1,4 +1,4 @@
-import ApiCaller from '../../utils/ApiCaller.mjs';
+import HTTPClient from '../../utils/API/HTTPClient.mjs';
 import logger from '../../utils/logger.mjs';
 import { cleanTestData, initData } from './utils.mjs';
 
@@ -13,8 +13,8 @@ export default async prisma => {
             Login route should have a max attempts of 5 per 15 minutes
         */
 
-        const admin_client = new ApiCaller();
-        const user_client = new ApiCaller();
+        const admin_client = new HTTPClient();
+        const user_client = new HTTPClient();
 
         // Admin login attempts
         for (let i = 0; i < 5; i++) await admin_client.ConnectAsAdmin(testAdmins[0].username, 'Wrong_password8832');

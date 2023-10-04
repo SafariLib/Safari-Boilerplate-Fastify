@@ -1,4 +1,4 @@
-import ApiCaller from '../../utils/ApiCaller.mjs';
+import HTTPClient from '../../utils/API/HTTPClient.mjs';
 import logger from '../../utils/logger.mjs';
 import { cleanTestData, initData } from './utils.mjs';
 
@@ -13,7 +13,7 @@ export default async prisma => {
             Visitor should not be able to access protected routes
         */
 
-        const visitorClient = new ApiCaller();
+        const visitorClient = new HTTPClient();
         const { res: visitorProtectedResponse } = await visitorClient.GET('/protected/ping');
         const { res: visitorAdminProtectedResponse } = await visitorClient.GET('/protected/admin/ping');
 
@@ -36,7 +36,7 @@ export default async prisma => {
             Logged user should be able to access protected routes
         */
 
-        const user_client = new ApiCaller();
+        const user_client = new HTTPClient();
         await user_client.ConnectAsUser(testUsers[0].username);
         const { res: userProtectedResponse } = await user_client.GET('/protected/ping');
 
@@ -46,7 +46,7 @@ export default async prisma => {
             logger.success(`SUCCESS: Logged user should be able to access protected routes`);
         }
 
-        const admin_client = new ApiCaller();
+        const admin_client = new HTTPClient();
         await admin_client.ConnectAsAdmin(testAdmins[0].username);
         const { res: adminProtectedResponse } = await admin_client.GET('/protected/admin/ping');
 

@@ -1,4 +1,4 @@
-import ApiCaller from '../../utils/ApiCaller.mjs';
+import HTTPClient from '../../utils/API/HTTPClient.mjs';
 import logger from '../../utils/logger.mjs';
 import { cleanTestData, initData, password } from './utils.mjs';
 
@@ -7,7 +7,7 @@ const TESTS_NAME = 'login';
 export default async prisma => {
     logger.startTest(TESTS_NAME);
     const { testUsers, testAdmins } = await initData(prisma);
-    const API = new ApiCaller();
+    const API = new HTTPClient();
 
     {
         /*
