@@ -1,6 +1,7 @@
 {
     "include": [
-        "./src"
+        "./src",
+        "./tests",
     ],
     "exclude": [
         "dist",
@@ -8,6 +9,7 @@
     ],
     "compilerOptions": {
         "types": [
+            "@types/jest",
             "node"
         ],
         "moduleResolution": "node",
@@ -35,6 +37,9 @@
             }
         ],
         "paths": {
+            "@root/*": [
+                "./*"
+            ],
             "@utils": [
                 "src/utils"
             ],
