@@ -28,4 +28,13 @@ export default async (fastify: FastifyInstance) => {
             reply.code(200).send({ message });
         },
     });
+
+    fastify.route({
+        method: 'PATCH',
+        url: `${adminPrefix}/ping`,
+        handler: async (request: Request, reply: Reply) => {
+            const message = `Server is running on ${request.hostname} (You've reached an admin authenticated route btw)`;
+            reply.code(200).send({ message });
+        },
+    });
 };

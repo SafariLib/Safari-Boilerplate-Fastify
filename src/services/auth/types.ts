@@ -22,7 +22,7 @@ export interface LoginAttemptState {
     cleanState: () => void;
 }
 
-export type CheckAdminAccessRights = (rights: Array<AccessRights>) => void;
+export type CheckAdminAccessRights = (rights: Array<AccessRights>) => Promise<void>;
 export type HasTooManyAttemps = (userId: number, ip: string, entity: Entity) => boolean;
 export type LogAttempt = (userId: number, ip: string, entity: Entity) => void;
 export type Login = (

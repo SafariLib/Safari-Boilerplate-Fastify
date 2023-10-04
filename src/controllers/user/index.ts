@@ -70,17 +70,17 @@ export default async (fastify: FastifyInstance) => {
     });
 
     fastify.route({
-        method: 'PUT',
+        method: 'PATCH',
         url: `${adminPrefix}/user/:id/revoke`,
         schema: revokeUser,
         handler: async (request: Request<GetUserByIdPayload>, reply: Reply) => {
             const { revokeUser, checkAdminAccessRights } = fastify.authService;
             const { id } = request.params;
-            checkAdminAccessRights([AccessRights.RevokeUser]);
+            await checkAdminAccessRights([AccessRights.RevokeUser]);
 
             try {
                 await revokeUser(Number(id));
-                reply.code(200).send();
+                reply.code(200);
             } catch (e) {
                 reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
             }
@@ -88,17 +88,17 @@ export default async (fastify: FastifyInstance) => {
     });
 
     fastify.route({
-        method: 'PUT',
+        method: 'PATCH',
         url: `${adminPrefix}/user/:id/activate`,
         schema: activateUser,
         handler: async (request: Request<GetUserByIdPayload>, reply: Reply) => {
             const { activateUser, checkAdminAccessRights } = fastify.authService;
             const { id } = request.params;
-            checkAdminAccessRights([AccessRights.RevokeUser]);
+            await checkAdminAccessRights([AccessRights.RevokeUser]);
 
             try {
                 await activateUser(Number(id));
-                reply.code(200).send();
+                reply.code(200);
             } catch (e) {
                 reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
             }
@@ -106,17 +106,17 @@ export default async (fastify: FastifyInstance) => {
     });
 
     fastify.route({
-        method: 'PUT',
+        method: 'PATCH',
         url: `${adminPrefix}/admin/:id/revoke`,
         schema: revokeUser,
         handler: async (request: Request<GetUserByIdPayload>, reply: Reply) => {
             const { revokeAdmin, checkAdminAccessRights } = fastify.authService;
             const { id } = request.params;
-            checkAdminAccessRights([AccessRights.RevokeAdmin]);
+            await checkAdminAccessRights([AccessRights.RevokeAdmin]);
 
             try {
                 await revokeAdmin(Number(id));
-                reply.code(200).send();
+                reply.code(200);
             } catch (e) {
                 reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
             }
@@ -124,17 +124,17 @@ export default async (fastify: FastifyInstance) => {
     });
 
     fastify.route({
-        method: 'PUT',
+        method: 'PATCH',
         url: `${adminPrefix}/admin/:id/activate`,
         schema: activateUser,
         handler: async (request: Request<GetUserByIdPayload>, reply: Reply) => {
             const { activateAdmin, checkAdminAccessRights } = fastify.authService;
             const { id } = request.params;
-            checkAdminAccessRights([AccessRights.RevokeAdmin]);
+            await checkAdminAccessRights([AccessRights.RevokeAdmin]);
 
             try {
                 await activateAdmin(Number(id));
-                reply.code(200).send();
+                reply.code(200);
             } catch (e) {
                 reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
             }

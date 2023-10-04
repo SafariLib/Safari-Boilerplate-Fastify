@@ -21,8 +21,10 @@ export default async prisma => {
             const user_client = new HTTPClient();
             await user_client.ConnectAsUser(users[0].username);
             const hasAccessBeforeRevoke = await user_client.testUserRevokedState();
-            const { res } = await super_admin_client.PUT(`/protected/admin/user/${users[0].id}/revoke`);
+            const { res } = await super_admin_client.PATCH(`/protected/admin/user/${users[0].id}/revoke`);
             const hasAccessAfterRevoke = await user_client.testUserRevokedState();
+
+            console.log(res);
             return {
                 hasAccessBeforeRevoke,
                 hasAccessAfterRevoke,

@@ -184,6 +184,22 @@ export default class HTTPClient {
     }
 
     /**
+     * Makes a PATCH request to the API
+     * @param {endpoint} endpoint
+     * @param {any} body
+     * @returns {Promise<Response>}
+     * */
+    async PATCH(endpoint, body, verbose = false) {
+        const res = await fetch(`${this.BASE_URL}${endpoint}`, {
+            method: 'PATCH',
+            body: JSON.stringify(body ?? {}),
+            headers: this.HEADERS,
+        });
+        const json = await res.json();
+        return { res, json };
+    }
+
+    /**
      * Makes a DELETE request to the API
      * @param {endpoint} endpoint
      * @returns {Promise<Response>}

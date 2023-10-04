@@ -134,7 +134,7 @@ export default plugin((async (fastify, opts, done) => {
      */
     const setUserRevokeState = async (userId: number, revoke: boolean, entity: 'ADMIN' | 'USER') => {
         await fastify.prisma.$executeRaw`
-            UPDATE ${entity === 'ADMIN' ? Prisma.sql`"User"` : Prisma.sql`"Customer"`}
+            UPDATE ${entity === 'ADMIN' ? Prisma.sql`"Admin"` : Prisma.sql`"User"`}
             SET revoked = ${revoke}
             WHERE id = ${userId};
         `;
@@ -160,7 +160,7 @@ export default plugin((async (fastify, opts, done) => {
      * @param tokenContent The token content
      * @param ip The user ip
      * @param userAgent The user agent
-     * @param entity The entity type USER or CUSTOMER
+     * @param entity The entity type USER or ADMIN
      * @returns The refresh token and the access token
      */
     const generateTokens = async (tokenContent: TokenContent, entity: Entity) => {
@@ -315,20 +315,21 @@ export default plugin((async (fastify, opts, done) => {
     };
 
     fastify.decorate('authService', {
-        logUser: async (username: string, password: string, ip: string) => login(username, password, ip, 'USER'),
-        logAdmin: async (username: string, password: string, ip: string) => login(username, password, ip, 'ADMIN'),
-        logoutUser: async () => logout('USER'),
-        logoutAdmin: async () => logout('ADMIN'),
-        logoutAllUser: async () => logoutAll('USER'),
-        logoutAllAdmin: async () => logoutAll('ADMIN'),
-        revokeUser: async (userId: number) => setUserRevokeState(userId, true, 'USER'),
-        revokeAdmin: async (userId: number) => setUserRevokeState(userId, true, 'ADMIN'),
-        activateUser: async (userId: number) => setUserRevokeState(userId, false, 'USER'),
-        activateAdmin: async (userId: number) => setUserRevokeState(userId, false, 'ADMIN'),
-        verifyUserRefreshToken: async (request: Request) => verifyRefreshToken(request, 'USER'),
-        verifyAdminRefreshToken: async (request: Request) => verifyRefreshToken(request, 'ADMIN'),
-        refreshUserTokens: async () => refreshTokens('USER'),
-        refreshAdminTokens: async () => refreshTokens('ADMIN'),
+        logUser: async (username: string, password: string, ip: string) => await login(username, password, ip, 'USER'),
+        logAdmin: async (username: string, password: string, ip: string) =>
+            await login(username, password, ip, 'ADMIN'),
+        logoutUser: async () => await logout('USER'),
+        logoutAdmin: async () => await logout('ADMIN'),
+        logoutAllUser: async () => await logoutAll('USER'),
+        logoutAllAdmin: async () => await logoutAll('ADMIN'),
+        revokeUser: async (userId: number) => await setUserRevokeState(userId, true, 'USER'),
+        revokeAdmin: async (userId: number) => await setUserRevokeState(userId, true, 'ADMIN'),
+        activateUser: async (userId: number) => await setUserRevokeState(userId, false, 'USER'),
+        activateAdmin: async (userId: number) => await setUserRevokeState(userId, false, 'ADMIN'),
+        verifyUserRefreshToken: async (request: Request) => await verifyRefreshToken(request, 'USER'),
+        verifyAdminRefreshToken: async (request: Request) => await verifyRefreshToken(request, 'ADMIN'),
+        refreshUserTokens: async () => await refreshTokens('USER'),
+        refreshAdminTokens: async () => await refreshTokens('ADMIN'),
         isAdmin,
         isUser,
         checkAdminAccessRights,
