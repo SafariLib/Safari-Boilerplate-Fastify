@@ -5,12 +5,10 @@ import qs from 'qs';
 export default (() => {
     try {
         envCheck();
-
         const server = Fastify({
             logger: !isProduction,
             querystringParser: str => qs.parse(str),
         });
-
         registerPlugins(server);
 
         return server;
