@@ -16,9 +16,6 @@ interface UserConstructor {
     created_at?: Date;
     updated_at?: Date;
 }
-type SuperAdminConstructor = Omit<UserConstructor, 'role_id'>;
-type CreateManyUserPayload = Omit<UserConstructor, 'username' | 'email' | 'password'>;
-
 export interface TestApiInstance {
     prismaClient: PrismaClient;
     server: FastifyInstance;
@@ -36,10 +33,9 @@ export interface TestApiInstance {
     saveUserState: (data: UserState) => Promise<UserState>;
     saveAdminState: (data: UserState) => Promise<UserState>;
     createAdmin: (userObject?: UserConstructor) => Promise<TestUser>;
-    createSuperAdmin: (userObject?: SuperAdminConstructor) => Promise<TestUser>;
     createUser: (userObject?: UserConstructor) => Promise<TestUser>;
-    createManyAdmins: (nbAdmins: number, userObject?: CreateManyUserPayload) => Promise<Array<UserState>>;
-    createManyUsers: (nbUsers: number, userObject?: CreateManyUserPayload) => Promise<Array<UserState>>;
+    createManyAdmins: (nbAdmins: number) => Promise<Array<UserState>>;
+    createManyUsers: (nbUsers: number) => Promise<Array<UserState>>;
     init: () => Promise<void>;
     close: () => Promise<void>;
     cloneUser: (user: TestUser) => TestUser;
@@ -128,33 +124,6 @@ export default class TestAPI {
     };
 
     /**
-     * Creates a new Super Admin and saves it in database
-     */
-    public createSuperAdmin = async (userObject?: SuperAdminConstructor) => {
-        const uuid = this.generateTestId();
-        const username = userObject?.username ?? `test_super_admin_${uuid}`;
-        const superAdmin = buildUserObject({
-            server: this.server,
-            entity: 'admin',
-            userObject: {
-                username: username,
-                email: userObject?.email ?? `${username}@test.test`,
-                role_id: 1,
-                revoked: userObject?.revoked ?? false,
-                created_at: userObject?.created_at ?? new Date(),
-                ...userObject,
-            },
-        });
-        const state = await (async () => {
-            const currentState = superAdmin.getUserState();
-            const { id } = await this.saveAdminState(currentState);
-            return superAdmin.setUserState({ ...currentState, id });
-        })();
-        this.superAdmins.push({ ...superAdmin, ...state });
-        return superAdmin;
-    };
-
-    /**
      * Creates a new User and saves it in database
      */
     public createUser = async (userObject?: UserConstructor) => {
@@ -184,7 +153,7 @@ export default class TestAPI {
     /**
      * Creates many new Admins and saves them in database
      */
-    public createManyAdmins = async (nbAdmins: number, userObject?: CreateManyUserPayload) => {
+    public createManyAdmins = async (nbAdmins: number) => {
         const admins = new Array<TestUser>();
         for (let i = 0; i < nbAdmins; i++) {
             const uuid = this.generateTestId();
@@ -194,10 +163,9 @@ export default class TestAPI {
                 userObject: {
                     username: `test_admin_${uuid}`,
                     email: `test_admin_${uuid}@test.test`,
-                    role_id: userObject?.role_id ?? 2,
-                    revoked: userObject?.revoked ?? false,
-                    created_at: userObject?.created_at ?? new Date(),
-                    ...userObject,
+                    role_id: 2,
+                    revoked: false,
+                    created_at: new Date(),
                 },
             });
             const state = await (async () => {
@@ -214,7 +182,7 @@ export default class TestAPI {
     /**
      * Creates many new Users and saves them in database
      */
-    public createManyUsers = async (nbUsers: number, userObject?: CreateManyUserPayload) => {
+    public createManyUsers = async (nbUsers: number) => {
         const users = new Array<TestUser>();
         for (let i = 0; i < nbUsers; i++) {
             const uuid = this.generateTestId();
@@ -225,9 +193,8 @@ export default class TestAPI {
                     username: `test_user_${uuid}`,
                     email: `test_user_${uuid}@test.test`,
                     role_id: 1,
-                    revoked: userObject?.revoked ?? false,
+                    revoked: false,
                     created_at: new Date(),
-                    ...userObject,
                 },
             });
             const state = await (async () => {

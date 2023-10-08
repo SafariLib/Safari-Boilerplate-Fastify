@@ -74,7 +74,7 @@ export interface TestUser {
         statusCode: number;
         message?: string;
         cookies?: { name: string; value: string }[];
-        json?: Record<string, unknown>;
+        json?: () => Record<string, unknown>;
     }>;
 }
 
@@ -216,19 +216,13 @@ export const buildUserObject = (constructor: TestUserConstructor): TestUser => {
         };
     };
 
-    const makePatchRequest = async (url: string, payload?: Record<string, unknown>) => {
-        const { json, ...res } = await server.inject({
+    const makePatchRequest = async (url: string, payload?: Record<string, unknown>) =>
+        await server.inject({
             method: 'PATCH',
             url,
             headers: HttpClientHeaders,
-            payload: payload ?? {},
+            payload,
         });
-        const jsonRes = await json();
-        return {
-            ...res,
-            json: jsonRes,
-        };
-    };
 
     return {
         id,
