@@ -15,7 +15,6 @@ export interface PaginatedQuery {
 
 export default plugin((async (fastify, opts, done) => {
     if (fastify.hasDecorator('queryService')) return done();
-    const { sql, empty: sqlEmpty } = Prisma;
 
     /**
      * Prepare the offset and limit for a paginated query
@@ -25,10 +24,10 @@ export default plugin((async (fastify, opts, done) => {
      * @throws PAGINATION_LIMIT_EXCEEDED
      */
     const buildPaginatedQuery: BuildPaginatedQuery = (page, limit) => {
-        if (page < 0 || limit < 0) throw { status: 400, errorCode: 'PAGINATION_MALFORMED' };
+        if (page < 1 || limit < 0) throw { status: 400, errorCode: 'PAGINATION_MALFORMED' };
         if (limit > 100) throw { status: 400, errorCode: 'PAGINATION_LIMIT_EXCEEDED' };
-        return sql`
-            OFFSET ${page * limit}
+        return Prisma.sql`
+            OFFSET ${(page - 1) * limit}
             LIMIT ${limit}
         `;
     };
@@ -41,12 +40,12 @@ export default plugin((async (fastify, opts, done) => {
      */
     const buildOrderByQuery: BuildOrderByQuery = (orderby, orderdir = 'ASC', columns) => {
         const value = columns.find(str => str.includes(orderby));
-        if (!orderby) return sqlEmpty;
+        if (!orderby) return Prisma.empty;
         if ((orderdir !== 'ASC' && orderdir !== 'DESC') || !value)
             throw { status: 400, errorCode: 'ORDERBY_MALFORMED' };
 
-        const [preparedValue, preparedDirection] = [sql([value]), sql([orderdir])];
-        return sql`ORDER BY ${preparedValue} ${preparedDirection}`;
+        const [preparedValue, preparedDirection] = [Prisma.sql([value]), Prisma.sql([orderdir])];
+        return Prisma.sql`ORDER BY ${preparedValue} ${preparedDirection}`;
     };
 
     fastify.decorate('queryService', {

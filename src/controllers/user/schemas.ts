@@ -25,7 +25,7 @@ const userSchema = {
 
 export const getUsers: FastifySchema = {
     tags: ['Admin - users'],
-    description: 'Get a paginated list of users, default limit is 10, default page is 0.',
+    description: 'Get a paginated list of users, default limit is 10, default page is 1.',
     headers: authorizationSchema,
     querystring: {
         type: 'object',

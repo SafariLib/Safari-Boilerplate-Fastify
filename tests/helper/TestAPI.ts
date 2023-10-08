@@ -43,6 +43,7 @@ export interface TestApiInstance {
     init: () => Promise<void>;
     close: () => Promise<void>;
     cloneUser: (user: TestUser) => TestUser;
+    deleteTestData: () => Promise<void>;
 }
 
 const fastifyOpts = {
@@ -273,7 +274,7 @@ export default class TestAPI {
         `;
     };
 
-    private deleteTestData = async () => {
+    public deleteTestData = async () => {
         this.admins.length &&
             (await this.prismaClient.admin.deleteMany({ where: { id: { in: this.admins.map(a => a.id) } } }));
         this.users.length &&
