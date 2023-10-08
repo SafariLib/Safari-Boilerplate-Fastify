@@ -1,60 +1,13 @@
 import { Prisma } from '@prisma/client';
 import type { FastifyPluginCallback } from 'fastify';
 import plugin from 'fastify-plugin';
-import type { GetPaginatedUsersPayload } from '../../controllers/user/types';
-
-interface GetUser {
-    id: number;
-    username: string;
-    email: string;
-    role: {
-        id: number;
-        name: string;
-    };
-    avatarUrl: string;
-    revoked: boolean;
-    createdAt: string;
-    updatedAt: string;
-}
-interface GetAdmin extends GetUser {}
-
-type GetUserById = (id: number) => Promise<GetUser>;
-type GetPaginatedUsers = (payload: GetPaginatedUsersPayload['Querystring']) => Promise<Array<GetUser>>;
+import type { GetAdmin, GetPaginatedUsers, GetUser, GetUserById } from './types';
+import { dateFilters, defaultSelectAdminQuery, defaultSelectUserQuery, orderColumns } from './utils';
 
 export default plugin((async (fastify, opts, done) => {
     if (fastify.hasDecorator('userService')) return done();
 
     const { sql, empty: sqlEmpty, join: sqlJoin } = Prisma;
-
-    const orderColumns = ['u.username', 'u.email', 'u.revoked'];
-
-    const selectUserQuery = sql`
-        SELECT
-            u.id,
-            u.username,
-            u.email,
-            u.avatar_url as "avatarUrl",
-            u.revoked,
-            u.created_at as "createdAt",
-            u.updated_at as "updatedAt",
-            json_build_object('id', u.role_id, 'name', r.name) AS role
-        FROM "User" u INNER JOIN "UserRole" r ON u.role_id = r.id
-    `;
-
-    const selectAdminQuery = sql`
-        SELECT
-            u.id,
-            u.username,
-            u.email,
-            u.avatar_url as "avatarUrl",
-            u.revoked,
-            u.created_at as "createdAt",
-            u.updated_at as "updatedAt",
-            json_build_object('id', u.role_id, 'name', r.name) AS role
-        FROM "Admin" u INNER JOIN "AdminRole" r ON u.role_id = r.id
-    `;
-
-    const dateFilters = ['created_after', 'created_before', 'updated_after', 'updated_before'];
 
     /**
      * Find a user by its id
@@ -63,7 +16,7 @@ export default plugin((async (fastify, opts, done) => {
      */
     const getUserById: GetUserById = async id => {
         const user = await fastify.prisma.$queryRaw<Array<GetUser>>`
-            ${selectUserQuery} WHERE u.id = ${Number(id)};
+            ${defaultSelectUserQuery} WHERE u.id = ${Number(id)};
         `;
         if (!user.length) throw { status: 404, errorCode: 'ENTITY_NOT_FOUND' };
         return user[0];
@@ -76,7 +29,7 @@ export default plugin((async (fastify, opts, done) => {
      */
     const getAdminById: GetUserById = async id => {
         const admin = await fastify.prisma.$queryRaw<Array<GetAdmin>>`
-            ${selectAdminQuery} WHERE u.id = ${Number(id)};
+            ${defaultSelectAdminQuery} WHERE u.id = ${Number(id)};
         `;
         if (!admin.length) throw { status: 404, errorCode: 'ENTITY_NOT_FOUND' };
         return admin[0];
@@ -93,6 +46,7 @@ export default plugin((async (fastify, opts, done) => {
      */
     const getPaginatedUsers: GetPaginatedUsers = async ({ page = 0, limit = 10, orderby, orderdir, ...filters }) => {
         const { buildPaginatedQuery, buildOrderByQuery } = fastify.queryService;
+        const { prisma } = fastify;
         const paginatedQuery = buildPaginatedQuery(page, limit);
         const orderByQuery = buildOrderByQuery(orderby, orderdir, orderColumns);
 
@@ -100,7 +54,7 @@ export default plugin((async (fastify, opts, done) => {
 
         if (username) {
             const user = await fastify.prisma.$queryRaw<Array<GetUser>>`
-                ${selectUserQuery} WHERE lower(u.username) 
+                ${defaultSelectUserQuery} WHERE lower(u.username) 
                 LIKE lower(\'%\' || ${username} || \'%\')
                 ${paginatedQuery};
             `;
@@ -108,7 +62,7 @@ export default plugin((async (fastify, opts, done) => {
         }
         if (email) {
             const user = await fastify.prisma.$queryRaw<Array<GetUser>>`
-                ${selectUserQuery} WHERE lower(u.email) 
+                ${defaultSelectUserQuery} WHERE lower(u.email) 
                 LIKE lower(\'%\' || ${email} || \'%\')
                 ${paginatedQuery};
             `;
@@ -143,11 +97,11 @@ export default plugin((async (fastify, opts, done) => {
             return queries.length ? sql`${sqlJoin(queries, ' AND ', 'WHERE ')}` : sqlEmpty;
         })();
 
-        return await fastify.prisma.$queryRaw<Array<GetUser>>`
-            ${selectUserQuery}
-            ${orderByQuery} 
-            ${paginatedQuery}
+        return await prisma.$queryRaw<Array<GetUser>>`
+            ${defaultSelectUserQuery}
             ${where}
+            ${orderByQuery}
+            ${paginatedQuery}
             ;
         `;
     };
@@ -163,6 +117,7 @@ export default plugin((async (fastify, opts, done) => {
      */
     const getPaginatedAdmins: GetPaginatedUsers = async ({ page = 0, limit = 10, orderby, orderdir, ...filters }) => {
         const { buildPaginatedQuery, buildOrderByQuery } = fastify.queryService;
+        const { prisma } = fastify;
         const paginatedQuery = buildPaginatedQuery(page, limit);
         const orderByQuery = buildOrderByQuery(orderby, orderdir, orderColumns);
 
@@ -170,7 +125,7 @@ export default plugin((async (fastify, opts, done) => {
 
         if (username) {
             const admin = await fastify.prisma.$queryRaw<Array<GetAdmin>>`
-                ${selectAdminQuery} WHERE lower(u.username) 
+                ${defaultSelectAdminQuery} WHERE lower(u.username) 
                 LIKE lower(\'%\' || ${username} || \'%\')
                 ${paginatedQuery};
             `;
@@ -178,7 +133,7 @@ export default plugin((async (fastify, opts, done) => {
         }
         if (email) {
             const admin = await fastify.prisma.$queryRaw<Array<GetAdmin>>`
-                ${selectAdminQuery} WHERE lower(u.email) 
+                ${defaultSelectAdminQuery} WHERE lower(u.email) 
                 LIKE lower(\'%\' || ${email} || \'%\')
                 ${paginatedQuery};
             `;
@@ -213,11 +168,11 @@ export default plugin((async (fastify, opts, done) => {
             return queries.length ? sql`${sqlJoin(queries, ' AND ', 'WHERE ')}` : sqlEmpty;
         })();
 
-        return await fastify.prisma.$queryRaw<Array<GetAdmin>>`
-            ${selectUserQuery}
-            ${orderByQuery} 
-            ${paginatedQuery}
+        return await prisma.$queryRaw<Array<GetAdmin>>`
+            ${defaultSelectUserQuery}
             ${where}
+            ${orderByQuery}
+            ${paginatedQuery}
             ;
         `;
     };

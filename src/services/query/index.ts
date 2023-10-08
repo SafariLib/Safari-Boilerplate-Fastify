@@ -15,7 +15,7 @@ export interface PaginatedQuery {
 
 export default plugin((async (fastify, opts, done) => {
     if (fastify.hasDecorator('queryService')) return done();
-    const { sql, empty: sqlEmpty, join: sqlJoin } = Prisma;
+    const { sql, empty: sqlEmpty } = Prisma;
 
     /**
      * Prepare the offset and limit for a paginated query
@@ -45,9 +45,8 @@ export default plugin((async (fastify, opts, done) => {
         if ((orderdir !== 'ASC' && orderdir !== 'DESC') || !value)
             throw { status: 400, errorCode: 'ORDERBY_MALFORMED' };
 
-        // FIXME: Probably a better way to fix this
-        if (orderdir === 'DESC') return sql`ORDER BY ${value} DESC`;
-        else return sql`ORDER BY ${value} ASC`;
+        const [preparedValue, preparedDirection] = [sql([value]), sql([orderdir])];
+        return sql`ORDER BY ${preparedValue} ${preparedDirection}`;
     };
 
     fastify.decorate('queryService', {
