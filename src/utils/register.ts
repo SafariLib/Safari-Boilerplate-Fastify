@@ -13,9 +13,9 @@ import type { FastifyInstance } from 'fastify';
  * - Controllers
  * - Hooks
  */
-export const registerPlugins = async (fastify: FastifyInstance) => {
-    console.log();
-    console.log('> Registering plugins...');
+export const registerPlugins = async (fastify: FastifyInstance, silent?: boolean) => {
+    !silent && console.log();
+    !silent && console.log('> Registering plugins...');
 
     [
         import('@plugins/dbConnector'),
@@ -39,13 +39,13 @@ export const registerPlugins = async (fastify: FastifyInstance) => {
         fastify.register(hook),
     );
 
-    console.log('Plugins successfully registered');
+    !silent && console.log('Plugins successfully registered');
 
     fastify.ready(() => {
-        console.log();
-        console.log('> Plugins Tree:');
-        console.log(fastify.printPlugins());
-        console.log('> Routes Tree:');
-        console.log(fastify.printRoutes());
+        !silent && console.log();
+        !silent && console.log('> Plugins Tree:');
+        !silent && console.log(fastify.printPlugins());
+        !silent && console.log('> Routes Tree:');
+        !silent && console.log(fastify.printRoutes());
     });
 };

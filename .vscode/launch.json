@@ -17,6 +17,16 @@
             "skipFiles": [
                 "<node_internals>/**/*.js"
             ]
+        },
+        {
+            "name": "Test server",
+            "type": "node",
+            "request": "attach",
+            "port": 9230,
+            "address": "localhost",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
         }
     ]
 }

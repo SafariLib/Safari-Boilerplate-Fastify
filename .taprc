@@ -1,0 +1,5 @@
+# vim: set filetype=yaml :
+color: true
+version: false
+disable-coverage: true
+timeout: 0

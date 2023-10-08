@@ -1,27 +1,14 @@
-import { PrismaClient } from '@prisma/client';
-import type { FastifyInstance } from 'fastify';
-import { buildServer } from './helper';
-import UserFactory from './helper/classes/UserFactory';
+import t from 'tap';
+import { TestAPI } from './helper';
 
-(async () => {
-    const prisma = new PrismaClient();
-    let server: FastifyInstance;
-    let userFactory: UserFactory;
+t.test('Authentication module tests', async t => {
+    const testApi = new TestAPI();
+    await testApi.init();
 
-    describe('Authentication module tests', () => {
-        beforeAll(async () => {
-            await prisma.$connect();
-            server = await buildServer();
-            userFactory = new UserFactory(prisma, server);
-        });
-        afterAll(async () => {
-            await userFactory.deleteTestData();
-            await server.close();
-            await prisma.$disconnect();
-        });
+    await import('./auth.tests/login').then(({ default: test }) => test(t, testApi));
+    await import('./auth.tests/token').then(({ default: test }) => test(t, testApi));
 
-        test('Should login a user', async () => {
-            await import('./tests.auth/login').then(({ default: test }) => test(server, userFactory));
-        });
+    t.teardown(async () => {
+        await testApi.close();
     });
-})();
+});

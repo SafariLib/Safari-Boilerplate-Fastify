@@ -9,7 +9,6 @@
     ],
     "compilerOptions": {
         "types": [
-            "@types/jest",
             "node"
         ],
         "moduleResolution": "node",
