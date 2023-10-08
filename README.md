@@ -29,7 +29,3 @@ Boilerplate for Rest API development.
 ### Error codes
 
 -   [API Error codes](./doc/api_error_codes.md)
-
-### Debug Tools
-
--   [**VSCode plugin:** Thunder Client](https://github.com/rangav/thunder-client-support)
