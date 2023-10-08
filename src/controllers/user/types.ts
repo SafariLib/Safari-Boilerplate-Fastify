@@ -1,3 +1,5 @@
+import type { PaginatedQuery } from '@services/query';
+
 export interface GetUserByIdPayload {
     Params: {
         id: string;
@@ -5,9 +7,7 @@ export interface GetUserByIdPayload {
 }
 
 export interface GetPaginatedUsersPayload {
-    Querystring: {
-        page: number;
-        limit: number;
+    Querystring: PaginatedQuery & {
         username: string;
         email: string;
         role: string;

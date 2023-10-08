@@ -1,18 +1,5 @@
+import { authorizationSchema, paginatedQuerySchema, selectByIdSchema } from '@schemas';
 import type { FastifySchema } from 'fastify';
-
-const protectedSchema = {
-    type: 'object',
-    properties: {
-        authorization: { type: 'string' },
-    },
-};
-
-const selectByIdSchema = {
-    type: 'object',
-    properties: {
-        id: { type: 'number' },
-    },
-};
 
 const roleSchema = {
     type: 'object',
@@ -39,12 +26,11 @@ const userSchema = {
 export const getUsers: FastifySchema = {
     tags: ['Admin - users'],
     description: 'Get a paginated list of users, default limit is 10, default page is 0.',
-    headers: protectedSchema,
+    headers: authorizationSchema,
     querystring: {
         type: 'object',
         properties: {
-            page: { type: 'number' },
-            limit: { type: 'number' },
+            ...paginatedQuerySchema,
             username: { type: 'string' },
             email: { type: 'string' },
             role: { type: 'string' },
@@ -65,7 +51,7 @@ export const getUsers: FastifySchema = {
 
 export const getUserById: FastifySchema = {
     tags: ['Admin - users'],
-    headers: protectedSchema,
+    headers: authorizationSchema,
     params: selectByIdSchema,
     response: {
         200: userSchema,
@@ -75,7 +61,7 @@ export const getUserById: FastifySchema = {
 export const revokeUser: FastifySchema = {
     tags: ['Admin - users'],
     description: 'Revoke a user/admin.',
-    headers: protectedSchema,
+    headers: authorizationSchema,
     params: selectByIdSchema,
     response: {
         200: userSchema,
@@ -85,7 +71,7 @@ export const revokeUser: FastifySchema = {
 export const activateUser: FastifySchema = {
     tags: ['Admin - users'],
     description: 'Activate a user/admin.',
-    headers: protectedSchema,
+    headers: authorizationSchema,
     params: selectByIdSchema,
     response: {
         200: userSchema,

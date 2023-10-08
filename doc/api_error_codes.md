@@ -3,6 +3,7 @@
 List of all API error codes.
 | Code | Description |
 | ------------------------- | --------------------------------------------------------------------------- |
+| `ORDERBY_MALFORMED` | Either "dir" entry does not match "ASC" or "DESC" or "by" does not exists in the table. |
 | `FILTER_MALFORMED_DATE` | Provided date format is malformed. |
 | `PAGINATION_LIMIT_EXCEEDED` | Pagination parameters exceeds server limitations. |
 | `PAGINATION_MALFORMED` | Pagination parameters malformed. |

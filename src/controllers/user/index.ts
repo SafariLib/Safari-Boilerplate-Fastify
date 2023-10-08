@@ -11,9 +11,8 @@ export default async (fastify: FastifyInstance) => {
         schema: getUsers,
         handler: async (request: Request<GetPaginatedUsersPayload>, reply: Reply) => {
             const { userService } = fastify;
-            const { page, limit, ...query } = request.query;
             try {
-                const users = await userService.getPaginatedUsers(page ?? 0, limit ?? 10, query);
+                const users = await userService.getPaginatedUsers(request.query);
                 reply.code(200).send(users);
             } catch (e) {
                 reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
@@ -27,9 +26,8 @@ export default async (fastify: FastifyInstance) => {
         schema: getUsers,
         handler: async (request: Request<GetPaginatedUsersPayload>, reply: Reply) => {
             const { userService } = fastify;
-            const { page, limit, ...query } = request.query;
             try {
-                const admins = await userService.getPaginatedAdmins(page ?? 0, limit ?? 10, query);
+                const admins = await userService.getPaginatedAdmins(request.query);
                 reply.code(200).send(admins);
             } catch (e) {
                 reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });

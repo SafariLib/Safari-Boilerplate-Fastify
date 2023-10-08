@@ -42,6 +42,9 @@
             "@utils": [
                 "src/utils"
             ],
+            "@schemas": [
+                "src/schemas"
+            ],
             "@controllers/*": [
                 "src/controllers/*"
             ],

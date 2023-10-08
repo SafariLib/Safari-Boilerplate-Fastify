@@ -1,4 +1,23 @@
 import type { FastifySchema } from 'fastify';
+import { authorizationSchema } from '../../schemas';
+
+const loggedUser = {
+    user: {
+        type: 'object',
+        properties: {
+            id: { type: 'number' },
+            username: { type: 'string' },
+            email: { type: 'string' },
+            role: { type: 'number' },
+            avatarUrl: { type: 'string' },
+            createdAt: { type: 'string' },
+            updatedAt: { type: 'string' },
+        },
+    },
+    accessToken: {
+        type: 'string',
+    },
+};
 
 export const loginSchema: FastifySchema = {
     tags: ['Authentication'],
@@ -21,65 +40,23 @@ export const loginSchema: FastifySchema = {
     response: {
         200: {
             type: 'object',
-            properties: {
-                user: {
-                    type: 'object',
-                    properties: {
-                        id: { type: 'number' },
-                        username: { type: 'string' },
-                        email: { type: 'string' },
-                        role: { type: 'number' },
-                        avatarUrl: { type: 'string' },
-                        createdAt: { type: 'string' },
-                        updatedAt: { type: 'string' },
-                    },
-                },
-                accessToken: {
-                    type: 'string',
-                },
-            },
+            properties: loggedUser,
         },
     },
 };
 
 export const logoutSchema: FastifySchema = {
     tags: ['Authentication'],
-    headers: {
-        type: 'object',
-        properties: {
-            authorization: { type: 'string' },
-        },
-    },
+    headers: authorizationSchema,
 };
 
 export const refreshSchema: FastifySchema = {
     tags: ['Authentication'],
-    headers: {
-        type: 'object',
-        properties: {
-            authorization: { type: 'string' },
-        },
-    },
+    headers: authorizationSchema,
     response: {
         200: {
             type: 'object',
-            properties: {
-                user: {
-                    type: 'object',
-                    properties: {
-                        id: { type: 'number' },
-                        username: { type: 'string' },
-                        email: { type: 'string' },
-                        role: { type: 'number' },
-                        avatarUrl: { type: 'string' },
-                        createdAt: { type: 'string' },
-                        updatedAt: { type: 'string' },
-                    },
-                },
-                accessToken: {
-                    type: 'string',
-                },
-            },
+            properties: loggedUser,
         },
     },
 };

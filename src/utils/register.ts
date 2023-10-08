@@ -27,8 +27,8 @@ export const registerPlugins = async (fastify: FastifyInstance, silent?: boolean
         import('@plugins/fastifySwagger'),
     ].forEach(plugin => fastify.register(plugin));
 
-    [import('@services/cache'), import('@services/auth'), import('@services/user')].forEach(service =>
-        fastify.register(service),
+    [import('@services/query'), import('@services/cache'), import('@services/auth'), import('@services/user')].forEach(
+        service => fastify.register(service),
     );
 
     [import('@controllers/debug'), import('@controllers/auth'), import('@controllers/user')].forEach(controller =>

@@ -41,6 +41,21 @@ export default async (t: TapInstance, testApi: TestApiInstance) => {
         t.match(statusCode, 200, 'Successfull get admins');
         t.ok(allMatch, 'Successfull get admins');
     });
+
+    t.test('Get admins ordered by username', async t => {
+        const query = buildQuerystring({ orderby: 'username', orderdir: 'DESC' });
+        const { json, statusCode } = await admin.makeGetRequest(`/protected/admin/admin${query}`);
+
+        console.log(query);
+        console.log(json);
+
+        const allMatch = (json as unknown as Array<{ username: string }>).every(({ username }, i) =>
+            i === 0 ? true : username > (json as unknown as Array<{ username: string }>)[i - 1].username,
+        );
+
+        t.match(statusCode, 200, 'Successfull get admins');
+        t.ok(allMatch, 'Successfull get admins');
+    });
 };
 
 export const userKeys: ObjectModel[] = [

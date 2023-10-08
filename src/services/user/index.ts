@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import type { FastifyPluginCallback } from 'fastify';
 import plugin from 'fastify-plugin';
+import type { GetPaginatedUsersPayload } from '../../controllers/user/types';
 
 interface GetUser {
     id: number;
@@ -17,24 +18,15 @@ interface GetUser {
 }
 interface GetAdmin extends GetUser {}
 
-interface GetPaginatedUsersQuery {
-    username?: string;
-    email?: string;
-    role?: string;
-    revoked?: boolean;
-    created_after?: Date;
-    created_before?: Date;
-    updated_after?: Date;
-    updated_before?: Date;
-}
-
 type GetUserById = (id: number) => Promise<GetUser>;
-type GetPaginatedUsers = (page: number, limit: number, filters?: GetPaginatedUsersQuery) => Promise<Array<GetUser>>;
+type GetPaginatedUsers = (payload: GetPaginatedUsersPayload['Querystring']) => Promise<Array<GetUser>>;
 
 export default plugin((async (fastify, opts, done) => {
     if (fastify.hasDecorator('userService')) return done();
 
     const { sql, empty: sqlEmpty, join: sqlJoin } = Prisma;
+
+    const orderColumns = ['u.username', 'u.email', 'u.revoked'];
 
     const selectUserQuery = sql`
         SELECT
@@ -99,9 +91,10 @@ export default plugin((async (fastify, opts, done) => {
      * @throws PAGINATION_LIMIT_EXCEEDED
      * @throws FILTER_MALFORMED_DATE
      */
-    const getPaginatedUsers: GetPaginatedUsers = async (page, limit, filters) => {
-        if (page < 0 || limit < 0) throw { status: 400, errorCode: 'PAGINATION_MALFORMED' };
-        if (limit > 100) throw { status: 400, errorCode: 'PAGINATION_LIMIT_EXCEEDED' };
+    const getPaginatedUsers: GetPaginatedUsers = async ({ page = 0, limit = 10, orderby, orderdir, ...filters }) => {
+        const { buildPaginatedQuery, buildOrderByQuery } = fastify.queryService;
+        const paginatedQuery = buildPaginatedQuery(page, limit);
+        const orderByQuery = buildOrderByQuery(orderby, orderdir, orderColumns);
 
         const { username, email, ...rest } = filters ?? {};
 
@@ -109,8 +102,7 @@ export default plugin((async (fastify, opts, done) => {
             const user = await fastify.prisma.$queryRaw<Array<GetUser>>`
                 ${selectUserQuery} WHERE lower(u.username) 
                 LIKE lower(\'%\' || ${username} || \'%\')
-                OFFSET ${page * limit}
-                LIMIT ${limit};
+                ${paginatedQuery};
             `;
             return !user ? [] : user;
         }
@@ -118,8 +110,7 @@ export default plugin((async (fastify, opts, done) => {
             const user = await fastify.prisma.$queryRaw<Array<GetUser>>`
                 ${selectUserQuery} WHERE lower(u.email) 
                 LIKE lower(\'%\' || ${email} || \'%\')
-                OFFSET ${page * limit}
-                LIMIT ${limit};
+                ${paginatedQuery};
             `;
             return !user ? [] : user;
         }
@@ -154,10 +145,10 @@ export default plugin((async (fastify, opts, done) => {
 
         return await fastify.prisma.$queryRaw<Array<GetUser>>`
             ${selectUserQuery}
+            ${orderByQuery} 
+            ${paginatedQuery}
             ${where}
-            ORDER BY u.id ASC
-            OFFSET ${page * limit}
-            LIMIT ${limit};
+            ;
         `;
     };
 
@@ -170,9 +161,10 @@ export default plugin((async (fastify, opts, done) => {
      * @throws PAGINATION_LIMIT_EXCEEDED
      * @throws FILTER_MALFORMED_DATE
      */
-    const getPaginatedAdmins: GetPaginatedUsers = async (page, limit, filters) => {
-        if (page < 0 || limit < 0) throw { status: 400, errorCode: 'PAGINATION_MALFORMED' };
-        if (limit > 100) throw { status: 400, errorCode: 'PAGINATION_LIMIT_EXCEEDED' };
+    const getPaginatedAdmins: GetPaginatedUsers = async ({ page = 0, limit = 10, orderby, orderdir, ...filters }) => {
+        const { buildPaginatedQuery, buildOrderByQuery } = fastify.queryService;
+        const paginatedQuery = buildPaginatedQuery(page, limit);
+        const orderByQuery = buildOrderByQuery(orderby, orderdir, orderColumns);
 
         const { username, email, ...rest } = filters ?? {};
 
@@ -180,8 +172,7 @@ export default plugin((async (fastify, opts, done) => {
             const admin = await fastify.prisma.$queryRaw<Array<GetAdmin>>`
                 ${selectAdminQuery} WHERE lower(u.username) 
                 LIKE lower(\'%\' || ${username} || \'%\')
-                OFFSET ${page * limit}
-                LIMIT ${limit};
+                ${paginatedQuery};
             `;
             return !admin ? [] : admin;
         }
@@ -189,8 +180,7 @@ export default plugin((async (fastify, opts, done) => {
             const admin = await fastify.prisma.$queryRaw<Array<GetAdmin>>`
                 ${selectAdminQuery} WHERE lower(u.email) 
                 LIKE lower(\'%\' || ${email} || \'%\')
-                OFFSET ${page * limit}
-                LIMIT ${limit};
+                ${paginatedQuery};
             `;
             return !admin ? [] : admin;
         }
@@ -224,11 +214,11 @@ export default plugin((async (fastify, opts, done) => {
         })();
 
         return await fastify.prisma.$queryRaw<Array<GetAdmin>>`
-            ${selectAdminQuery}
+            ${selectUserQuery}
+            ${orderByQuery} 
+            ${paginatedQuery}
             ${where}
-            ORDER BY u.id ASC
-            OFFSET ${page * limit}
-            LIMIT ${limit};
+            ;
         `;
     };
 
