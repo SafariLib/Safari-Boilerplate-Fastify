@@ -61,6 +61,12 @@ export interface TestUser {
         cookies?: { name: string; value: string }[];
         json?: () => { accessToken: string };
     }>;
+    makeGetRequest: (url: string) => Promise<{
+        statusCode: number;
+        message?: string;
+        cookies?: { name: string; value: string }[];
+        json?: Record<string, unknown>;
+    }>;
 }
 
 export const buildUserObject = (constructor: TestUserConstructor): TestUser => {
@@ -188,6 +194,19 @@ export const buildUserObject = (constructor: TestUserConstructor): TestUser => {
         };
     };
 
+    const makeGetRequest = async (url: string) => {
+        const { json, ...res } = await server.inject({
+            method: 'GET',
+            url,
+            headers: HttpClientHeaders,
+        });
+        const jsonRes = await json();
+        return {
+            ...res,
+            json: jsonRes,
+        };
+    };
+
     return {
         id,
         username,
@@ -210,6 +229,7 @@ export const buildUserObject = (constructor: TestUserConstructor): TestUser => {
         logout,
         logoutAllSessions,
         refreshTokens,
+        makeGetRequest,
     };
 };
 

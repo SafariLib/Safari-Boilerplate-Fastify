@@ -1,4 +1,4 @@
-import type { TapInstance, TestApiInstance } from '../helper';
+import type { TapInstance, TestApiInstance } from '../../helper';
 
 export default async (t: TapInstance, testApi: TestApiInstance) => {
     t.test('Refreshing tokens', async t => {

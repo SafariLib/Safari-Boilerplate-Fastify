@@ -5,8 +5,18 @@ import Fastify from 'fastify';
 import qs from 'qs';
 import { buildUserObject, type TestUser, type UserState } from './buildUserObject';
 
-type UserConstructor = Omit<UserState, 'id'>;
-type SuperAdminConstructor = Omit<UserState, 'id' | 'role_id'>;
+// type UserConstructor = Omit<UserState, 'id'>;
+interface UserConstructor {
+    username?: string;
+    email?: string;
+    password?: string;
+    avatar_url?: string;
+    revoked?: boolean;
+    role_id?: number;
+    created_at?: Date;
+    updated_at?: Date;
+}
+type SuperAdminConstructor = Omit<UserConstructor, 'role_id'>;
 type CreateManyUserPayload = Omit<UserConstructor, 'username' | 'email' | 'password'>;
 
 export interface TestApiInstance {
@@ -32,6 +42,7 @@ export interface TestApiInstance {
     createManyUsers: (nbUsers: number, userObject?: CreateManyUserPayload) => Promise<Array<UserState>>;
     init: () => Promise<void>;
     close: () => Promise<void>;
+    cloneUser: (user: TestUser) => TestUser;
 }
 
 const fastifyOpts = {
@@ -92,7 +103,7 @@ export default class TestAPI {
      * Creates a new Admin and saves it in database
      */
     public createAdmin = async (userObject?: UserConstructor) => {
-        const uuid = this.generateUuid();
+        const uuid = this.generateTestId();
         const username = userObject?.username ?? `test_admin_${uuid}`;
         const admin = buildUserObject({
             server: this.server,
@@ -119,7 +130,7 @@ export default class TestAPI {
      * Creates a new Super Admin and saves it in database
      */
     public createSuperAdmin = async (userObject?: SuperAdminConstructor) => {
-        const uuid = this.generateUuid();
+        const uuid = this.generateTestId();
         const username = userObject?.username ?? `test_super_admin_${uuid}`;
         const superAdmin = buildUserObject({
             server: this.server,
@@ -146,7 +157,7 @@ export default class TestAPI {
      * Creates a new User and saves it in database
      */
     public createUser = async (userObject?: UserConstructor) => {
-        const uuid = this.generateUuid();
+        const uuid = this.generateTestId();
         const username = userObject?.username ?? `test_user_${uuid}`;
         const user = buildUserObject({
             server: this.server,
@@ -175,7 +186,7 @@ export default class TestAPI {
     public createManyAdmins = async (nbAdmins: number, userObject?: CreateManyUserPayload) => {
         const admins = new Array<TestUser>();
         for (let i = 0; i < nbAdmins; i++) {
-            const uuid = this.generateUuid();
+            const uuid = this.generateTestId();
             const admin = buildUserObject({
                 server: this.server,
                 entity: 'admin',
@@ -183,6 +194,7 @@ export default class TestAPI {
                     username: `test_admin_${uuid}`,
                     email: `test_admin_${uuid}@test.test`,
                     role_id: userObject?.role_id ?? 2,
+                    revoked: userObject?.revoked ?? false,
                     created_at: userObject?.created_at ?? new Date(),
                     ...userObject,
                 },
@@ -204,7 +216,7 @@ export default class TestAPI {
     public createManyUsers = async (nbUsers: number, userObject?: CreateManyUserPayload) => {
         const users = new Array<TestUser>();
         for (let i = 0; i < nbUsers; i++) {
-            const uuid = this.generateUuid();
+            const uuid = this.generateTestId();
             const user = buildUserObject({
                 server: this.server,
                 entity: 'user',
@@ -212,6 +224,7 @@ export default class TestAPI {
                     username: `test_user_${uuid}`,
                     email: `test_user_${uuid}@test.test`,
                     role_id: 1,
+                    revoked: userObject?.revoked ?? false,
                     created_at: new Date(),
                     ...userObject,
                 },
@@ -269,5 +282,11 @@ export default class TestAPI {
         await this.resetDatabaseIndexes();
     };
 
-    private generateUuid = () => Math.floor(Math.random() * 1000);
+    private generateTestId = (nbChar = 8) =>
+        Math.random()
+            .toString(36)
+            .substring(2, nbChar + 2) +
+        Math.random()
+            .toString(36)
+            .substring(2, nbChar + 2);
 }
