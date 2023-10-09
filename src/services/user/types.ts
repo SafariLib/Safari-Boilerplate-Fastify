@@ -19,3 +19,7 @@ export interface GetAdmin extends GetUser {}
 export type GetUserById = (id: number) => Promise<GetUser>;
 
 export type GetPaginatedUsers = (payload: GetPaginatedUsersPayload['Querystring']) => Promise<Array<GetUser>>;
+
+export type GetAdminRoles = () => Promise<Array<{ id: number; name: string }>>;
+
+export type CreateAdmin = (payload: { username: string; email: string; roleId: number }) => Promise<GetAdmin>;

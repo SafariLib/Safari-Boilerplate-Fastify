@@ -185,6 +185,11 @@ export default plugin((async (fastify, opts, done) => {
         `;
     };
 
+    // const createAdmin: CreateAdmin = async ({ username, email, roleId }) => {
+    //     const { prisma, authService } = fastify;
+    //     const adminId = authService.getUserId();
+    // };
+
     fastify.decorate('userService', {
         getUserById,
         getPaginatedUsers,

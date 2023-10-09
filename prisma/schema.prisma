@@ -10,59 +10,117 @@ datasource db {
   url      = env("POSTGRES_URI")
 }
 
+// -------------------------------------- //
+//             Administrator              //
+// -------------------------------------- //
 model Admin {
-  id         Int       @id @default(autoincrement())
-  username   String    @unique @db.VarChar(32)
-  email      String    @unique @db.VarChar(64)
-  password   String    @db.VarChar(64)
-  avatar_url String?
-  revoked    Boolean   @default(false)
-  role_id    Int       
-  created_at DateTime  @default(now())
-  updated_at DateTime?
-	@@map("Admin")
+  id          Int       @id @default(autoincrement())
+  username    String    @unique @db.VarChar(32)
+  email       String    @unique @db.VarChar(64)
+  password    String    @db.VarChar(64)
+  avatarUrl   String?
+  revoked     Boolean   @default(false)
+  roleId      Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime?
+  updatedBy   Int?
+  updaterType String?   @default("SYSTEM") @db.VarChar(12)
 
-  // Relationship with AdminRole
-  role AdminRole @relation(fields: [role_id], references: [id])
-}
+  // Relationships
+  role    AdminRole      @relation(fields: [roleId], references: [id])
+  editLog AdminEditLog[]
 
-model User {
-  id         Int       @id @default(autoincrement())
-  username   String    @unique @db.VarChar(32)
-  email      String    @unique @db.VarChar(64)
-  password   String    @db.VarChar(64)
-  avatar_url String?
-  revoked    Boolean   @default(false)
-  role_id    Int       
-  created_at DateTime  @default(now())
-  updated_at DateTime?
-	@@map("User")
-
-  // Relationship with UserRole
-  role UserRole @relation(fields: [role_id], references: [id])
+  @@map("Admin")
 }
 
 model AdminRole {
-  id         Int       @id @default(autoincrement())
-  name       String    @unique @db.VarChar(32)
-  is_default Boolean   @default(false)
-  rights     Int[]
-  created_at DateTime  @default(now())
-  updated_at DateTime?
-  @@map("AdminRole")
+  id        Int       @id @default(autoincrement())
+  name      String    @unique @db.VarChar(32)
+  isDefault Boolean   @default(false)
+  rights    Int[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime?
 
-  // Relationship with Admin
+  // Relationships
   admins Admin[]
+
+  @@map("AdminRole")
+}
+
+model AdminEditLog {
+  id        Int @id @default(autoincrement())
+  adminId   Int
+  editLogId Int
+
+  // Relationships
+  admin Admin   @relation(fields: [adminId], references: [id])
+  log   EditLog @relation(fields: [editLogId], references: [id])
+
+  @@map("AdminEditLog")
+}
+
+// -------------------------------------- //
+//                   User                 //
+// -------------------------------------- //
+model User {
+  id          Int       @id @default(autoincrement())
+  username    String    @unique @db.VarChar(32)
+  email       String    @unique @db.VarChar(64)
+  password    String    @db.VarChar(64)
+  avatarUrl   String?
+  revoked     Boolean   @default(false)
+  roleId      Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime?
+  updatedBy   Int?
+  updaterType String?   @default("SYSTEM") @db.VarChar(12)
+
+  // Relationships
+  role    UserRole      @relation(fields: [roleId], references: [id])
+  editLog UserEditLog[]
+
+  @@map("User")
 }
 
 model UserRole {
-  id         Int       @id @default(autoincrement())
-  name       String    @unique @db.VarChar(32)
-  is_default Boolean   @default(false)
-  created_at DateTime  @default(now())
-  updated_at DateTime?
-  @@map("UserRole")
+  id        Int       @id @default(autoincrement())
+  name      String    @unique @db.VarChar(32)
+  isDefault Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime?
 
   // Relationship with User
   users User[]
+
+  @@map("UserRole")
+}
+
+model UserEditLog {
+  id        Int @id @default(autoincrement())
+  userId    Int
+  editLogId Int
+
+  user User    @relation(fields: [userId], references: [id])
+  log  EditLog @relation(fields: [editLogId], references: [id])
+
+  @@map("UserEditLog")
+}
+
+// -------------------------------------- //
+//                  Logs                  //
+// -------------------------------------- //
+model EditLog {
+  id            Int      @id @default(autoincrement())
+  editorId      Int
+  editorIp      String   @db.VarChar(64)
+  editorIsAdmin Boolean  @default(false)
+  table         String   @db.VarChar(32)
+  code          String   @db.VarChar(24)
+  createdAt     DateTime @default(now())
+
+  // Relationships
+  adminLog AdminEditLog[]
+  userLog  UserEditLog[]
+
+  @@map("EditLog")
 }
