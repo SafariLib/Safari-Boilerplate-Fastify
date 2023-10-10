@@ -10,65 +10,13 @@ datasource db {
   url      = env("POSTGRES_URI")
 }
 
-// -------------------------------------- //
-//             Administrator              //
-// -------------------------------------- //
-model Admin {
-  id          Int       @id @default(autoincrement())
-  username    String    @unique @db.VarChar(32)
-  email       String    @unique @db.VarChar(64)
-  password    String    @db.VarChar(64)
-  avatarUrl   String?
-  revoked     Boolean   @default(false)
-  roleId      Int
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime?
-  updatedBy   Int?
-  updaterType String?   @default("SYSTEM") @db.VarChar(12)
-
-  // Relationships
-  role    AdminRole      @relation(fields: [roleId], references: [id])
-  editLog AdminEditLog[]
-
-  @@map("Admin")
-}
-
-model AdminRole {
-  id        Int       @id @default(autoincrement())
-  name      String    @unique @db.VarChar(32)
-  isDefault Boolean   @default(false)
-  rights    Int[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime?
-
-  // Relationships
-  admins Admin[]
-
-  @@map("AdminRole")
-}
-
-model AdminEditLog {
-  id        Int @id @default(autoincrement())
-  adminId   Int
-  editLogId Int
-
-  // Relationships
-  admin Admin   @relation(fields: [adminId], references: [id])
-  log   EditLog @relation(fields: [editLogId], references: [id])
-
-  @@map("AdminEditLog")
-}
-
-// -------------------------------------- //
-//                   User                 //
-// -------------------------------------- //
 model User {
   id          Int       @id @default(autoincrement())
   username    String    @unique @db.VarChar(32)
   email       String    @unique @db.VarChar(64)
   password    String    @db.VarChar(64)
   avatarUrl   String?
-  revoked     Boolean   @default(false)
+  isRevoked     Boolean   @default(false)
   roleId      Int
   createdAt   DateTime  @default(now())
   updatedAt   DateTime?
@@ -76,51 +24,34 @@ model User {
   updaterType String?   @default("SYSTEM") @db.VarChar(12)
 
   // Relationships
-  role    UserRole      @relation(fields: [roleId], references: [id])
-  editLog UserEditLog[]
+  role     Role      @relation(fields: [roleId], references: [id])
+  editLogs EditLog[]
 
   @@map("User")
 }
 
-model UserRole {
+model Role {
   id        Int       @id @default(autoincrement())
   name      String    @unique @db.VarChar(32)
   isDefault Boolean   @default(false)
+  rights    Int[]
   createdAt DateTime  @default(now())
   updatedAt DateTime?
+  users     User[]
 
-  // Relationship with User
-  users User[]
-
-  @@map("UserRole")
+  @@map("Role")
 }
 
-model UserEditLog {
-  id        Int @id @default(autoincrement())
-  userId    Int
-  editLogId Int
-
-  user User    @relation(fields: [userId], references: [id])
-  log  EditLog @relation(fields: [editLogId], references: [id])
-
-  @@map("UserEditLog")
-}
-
-// -------------------------------------- //
-//                  Logs                  //
-// -------------------------------------- //
 model EditLog {
-  id            Int      @id @default(autoincrement())
-  editorId      Int
-  editorIp      String   @db.VarChar(64)
-  editorIsAdmin Boolean  @default(false)
-  table         String   @db.VarChar(32)
-  code          String   @db.VarChar(24)
-  createdAt     DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  editorId  Int
+  editorIp  String   @db.VarChar(64)
+  table     String   @db.VarChar(32)
+  code      String   @db.VarChar(24)
+  createdAt DateTime @default(now())
 
   // Relationships
-  adminLog AdminEditLog[]
-  userLog  UserEditLog[]
+  editor User @relation(fields: [editorId], references: [id])
 
   @@map("EditLog")
 }

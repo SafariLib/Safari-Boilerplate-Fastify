@@ -45,6 +45,9 @@
             "@schemas": [
                 "src/schemas"
             ],
+            "@types": [
+                "src/models/types"
+            ],
             "@controllers/*": [
                 "src/controllers/*"
             ],

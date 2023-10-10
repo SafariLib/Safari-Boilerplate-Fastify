@@ -1,4 +1,4 @@
-import { FastifyRedisPluginOptions } from '@fastify/redis';
+import type { FastifyRedisPluginOptions } from '@fastify/redis';
 import type { FastifyPluginCallback } from 'fastify';
 import plugin from 'fastify-plugin';
 
@@ -22,14 +22,6 @@ export default plugin((async (fastify, opts, done) => {
     fastify.register(import('@fastify/redis'), {
         ...baseOpts,
         namespace: 'user_token_id',
-    });
-    fastify.register(import('@fastify/redis'), {
-        ...baseOpts,
-        namespace: 'admin_secret',
-    });
-    fastify.register(import('@fastify/redis'), {
-        ...baseOpts,
-        namespace: 'admin_token_id',
     });
 
     done();

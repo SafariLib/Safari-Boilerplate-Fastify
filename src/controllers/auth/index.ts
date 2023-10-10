@@ -1,43 +1,22 @@
-import { refreshTokenName } from '@plugins/jsonWebToken';
+import { refreshTokenName } from '@plugins/jsonWebToken/utils';
 import type { FastifyInstance, FastifyReply as Reply, FastifyRequest as Request } from 'fastify';
 import { loginSchema, logoutSchema, refreshSchema } from './schemas';
 import type { LoginPayload } from './types';
 
 export default async (fastify: FastifyInstance) => {
+    const { authService, jsonWebToken } = fastify;
+
     fastify.route({
         method: 'POST',
-        url: '/auth/login/admin',
+        url: '/auth/login',
         schema: loginSchema,
         handler: async (request: Request<LoginPayload>, reply: Reply) => {
-            const { authService, jsonWebToken } = fastify;
             const { password, username } = request.body;
             const userClient = authService.getUserIp(request);
 
             try {
-                const { user, refreshToken, accessToken } = await authService.logAdmin(username, password, userClient);
-                reply.code(200).setCookie(refreshTokenName, refreshToken, jsonWebToken.generateAdminCookieOpts()).send({
-                    user,
-                    accessToken,
-                });
-            } catch (e) {
-                reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
-            }
-        },
-    });
-
-    fastify.route({
-        method: 'POST',
-        url: '/auth/login/user',
-        schema: loginSchema,
-        handler: async (request: Request<LoginPayload>, reply: Reply) => {
-            const { authService, jsonWebToken } = fastify;
-            const { password, username } = request.body;
-            const userClient = authService.getUserIp(request);
-
-            try {
-                const { user, refreshToken, accessToken } = await authService.logUser(username, password, userClient);
-
-                reply.code(200).setCookie(refreshTokenName, refreshToken, jsonWebToken.generateUserCookieOpts()).send({
+                const { user, refreshToken, accessToken } = await authService.login(username, password, userClient);
+                reply.code(200).setCookie(refreshTokenName, refreshToken, jsonWebToken.generateCookieOpts()).send({
                     user,
                     accessToken,
                 });
@@ -49,12 +28,12 @@ export default async (fastify: FastifyInstance) => {
 
     fastify.route({
         method: 'GET',
-        url: '/auth/logout/admin',
+        url: '/auth/logout',
         schema: logoutSchema,
         handler: async (request: Request, reply: Reply) => {
             const { authService } = fastify;
             try {
-                authService.logoutAdmin();
+                await authService.logout();
                 reply.code(200).clearCookie(refreshTokenName).send();
             } catch (e) {
                 reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
@@ -64,12 +43,12 @@ export default async (fastify: FastifyInstance) => {
 
     fastify.route({
         method: 'GET',
-        url: '/auth/logout/user',
+        url: '/auth/logout/all',
         schema: logoutSchema,
         handler: async (request: Request, reply: Reply) => {
             const { authService } = fastify;
             try {
-                await authService.logoutUser();
+                await authService.logoutAll();
                 reply.code(200).clearCookie(refreshTokenName).send();
             } catch (e) {
                 reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
@@ -79,63 +58,14 @@ export default async (fastify: FastifyInstance) => {
 
     fastify.route({
         method: 'GET',
-        url: '/auth/logout/admin/all',
-        schema: logoutSchema,
-        handler: async (request: Request, reply: Reply) => {
-            const { authService } = fastify;
-            try {
-                authService.logoutAllAdmin();
-                reply.code(200).clearCookie(refreshTokenName).send();
-            } catch (e) {
-                reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
-            }
-        },
-    });
-
-    fastify.route({
-        method: 'GET',
-        url: '/auth/logout/user/all',
-        schema: logoutSchema,
-        handler: async (request: Request, reply: Reply) => {
-            const { authService } = fastify;
-            try {
-                await authService.logoutAllUser();
-                reply.code(200).clearCookie(refreshTokenName).send();
-            } catch (e) {
-                reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
-            }
-        },
-    });
-
-    fastify.route({
-        method: 'GET',
-        url: '/auth/refresh/admin',
+        url: '/auth/refresh',
         schema: refreshSchema,
         handler: async (request: Request, reply: Reply) => {
             const { authService, jsonWebToken } = fastify;
             try {
-                await authService.verifyAdminRefreshToken(request);
-                const { user, refreshToken, accessToken } = await authService.refreshAdminTokens();
-                reply.code(200).setCookie(refreshTokenName, refreshToken, jsonWebToken.generateAdminCookieOpts()).send({
-                    user,
-                    accessToken,
-                });
-            } catch (e) {
-                reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
-            }
-        },
-    });
-
-    fastify.route({
-        method: 'GET',
-        url: '/auth/refresh/user',
-        schema: refreshSchema,
-        handler: async (request: Request, reply: Reply) => {
-            const { authService, jsonWebToken } = fastify;
-            try {
-                await authService.verifyUserRefreshToken(request);
-                const { user, refreshToken, accessToken } = await authService.refreshUserTokens();
-                reply.code(200).setCookie(refreshTokenName, refreshToken, jsonWebToken.generateUserCookieOpts()).send({
+                await authService.verifyRefreshToken(request);
+                const { user, refreshToken, accessToken } = await authService.refreshTokens();
+                reply.code(200).setCookie(refreshTokenName, refreshToken, jsonWebToken.generateCookieOpts()).send({
                     user,
                     accessToken,
                 });
