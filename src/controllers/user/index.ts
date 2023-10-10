@@ -1,11 +1,6 @@
 import { AccessRights } from '@services/auth/types';
 import type { FastifyInstance, FastifyReply as Reply, FastifyRequest as Request } from 'fastify';
-import {
-    activateUser as activateSchema,
-    getUserById as getByIdSchema,
-    getUsers as getSchema,
-    revokeUser as revokeSchema
-} from './schemas';
+import { activateUserSchema, getUserByIdSchema, getUsersSchema, revokeUserSchema } from './schemas';
 import type { GetPaginatedUsersPayload, GetUserByIdPayload } from './types';
 
 export default async (fastify: FastifyInstance) => {
@@ -16,7 +11,7 @@ export default async (fastify: FastifyInstance) => {
     fastify.route({
         method: 'GET',
         url: `${protectedPrefix}/user`,
-        schema: getSchema,
+        schema: getUsersSchema,
         handler: async (request: Request<GetPaginatedUsersPayload>, reply: Reply) => {
             const { userService } = fastify;
             try {
@@ -31,7 +26,7 @@ export default async (fastify: FastifyInstance) => {
     fastify.route({
         method: 'GET',
         url: `${protectedPrefix}/user/:id`,
-        schema: getByIdSchema,
+        schema: getUserByIdSchema,
         handler: async (request: Request<GetUserByIdPayload>, reply: Reply) => {
             const { id } = request.params;
             try {
@@ -46,7 +41,7 @@ export default async (fastify: FastifyInstance) => {
     fastify.route({
         method: 'PATCH',
         url: `${protectedPrefix}/user/:id/revoke`,
-        schema: revokeSchema,
+        schema: revokeUserSchema,
         handler: async (request: Request<GetUserByIdPayload>, reply: Reply) => {
             const { id } = request.params;
             await checkAccessRights([AccessRights.RevokeUser]);
@@ -63,7 +58,7 @@ export default async (fastify: FastifyInstance) => {
     fastify.route({
         method: 'PATCH',
         url: `${protectedPrefix}/user/:id/activate`,
-        schema: activateSchema,
+        schema: activateUserSchema,
         handler: async (request: Request<GetUserByIdPayload>, reply: Reply) => {
             const { id } = request.params;
             await checkAccessRights([AccessRights.RevokeUser]);

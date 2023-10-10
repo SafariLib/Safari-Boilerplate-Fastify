@@ -6,6 +6,7 @@ export interface RequestService {
     isRefreshRoute: RouteEntityCheck;
     isLoginRoute: RouteEntityCheck;
     isLogoutRoute: RouteEntityCheck;
+    isSwaggerRoute: RouteEntityCheck;
     setUrl: SetUrl;
     protectedPrefix: string;
 }

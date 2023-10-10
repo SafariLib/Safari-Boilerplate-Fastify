@@ -1,7 +1,7 @@
 import { authorizationSchema, paginatedQuerySchema, selectByIdSchema } from '@schemas';
 import type { FastifySchema } from 'fastify';
 
-const tags = ['Users']
+const tags = ['Users'];
 
 const roleSchema = {
     type: 'object',
@@ -25,7 +25,7 @@ const userSchema = {
     },
 };
 
-export const getUsers: FastifySchema = {
+export const getUsersSchema: FastifySchema = {
     tags,
     description: 'Get a paginated list of users, default limit is 10, default page is 1.',
     headers: authorizationSchema,
@@ -51,7 +51,7 @@ export const getUsers: FastifySchema = {
     },
 };
 
-export const getUserById: FastifySchema = {
+export const getUserByIdSchema: FastifySchema = {
     tags,
     headers: authorizationSchema,
     params: selectByIdSchema,
@@ -60,7 +60,7 @@ export const getUserById: FastifySchema = {
     },
 };
 
-export const revokeUser: FastifySchema = {
+export const revokeUserSchema: FastifySchema = {
     tags,
     description: 'Revoke a user/admin.',
     headers: authorizationSchema,
@@ -70,7 +70,7 @@ export const revokeUser: FastifySchema = {
     },
 };
 
-export const activateUser: FastifySchema = {
+export const activateUserSchema: FastifySchema = {
     tags,
     description: 'Activate a user/admin.',
     headers: authorizationSchema,
