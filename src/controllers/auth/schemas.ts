@@ -1,5 +1,5 @@
+import { authorizationSchema } from '@schemas';
 import type { FastifySchema } from 'fastify';
-import { authorizationSchema } from '../../schemas';
 
 const loggedUser = {
     user: {

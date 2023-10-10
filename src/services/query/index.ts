@@ -1,17 +1,7 @@
 import { Prisma } from '@prisma/client';
-import type { Sql } from '@prisma/client/runtime/library';
 import type { FastifyPluginCallback } from 'fastify';
 import plugin from 'fastify-plugin';
-
-type BuildPaginatedQuery = (page: number, limit: number) => Sql;
-type BuildOrderByQuery = (orderby: string, orderdir: 'ASC' | 'DESC', columns: Array<string>) => Sql;
-
-export interface PaginatedQuery {
-    orderby?: string;
-    orderdir?: 'ASC' | 'DESC';
-    page?: number;
-    limit?: number;
-}
+import type { BuildOrderByQuery, BuildPaginatedQuery, QueryService } from './types';
 
 export default plugin((async (fastify, opts, done) => {
     if (fastify.hasDecorator('queryService')) return done();
@@ -51,14 +41,10 @@ export default plugin((async (fastify, opts, done) => {
     fastify.decorate('queryService', {
         buildPaginatedQuery,
         buildOrderByQuery,
+       
     });
     done();
 }) as FastifyPluginCallback);
-
-interface QueryService {
-    buildPaginatedQuery: BuildPaginatedQuery;
-    buildOrderByQuery: BuildOrderByQuery;
-}
 
 declare module 'fastify' {
     interface FastifyInstance {

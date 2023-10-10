@@ -43,3 +43,4 @@ List of all API error codes.
 | `AUTH_TOKEN_EXPIRED` | Bearer token is expired. |
 | `AUTH_TOKEN_REVOKED` | Bearer token is revoked. |
 | `AUTH_TOKEN_INVALID` | Bearer token is malformed. |
+ 

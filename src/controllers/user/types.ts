@@ -1,4 +1,4 @@
-import type { PaginatedQuery } from '@services/query';
+import type { PaginatedQuery } from '@services/query/types';
 
 export interface GetUserByIdPayload {
     Params: {

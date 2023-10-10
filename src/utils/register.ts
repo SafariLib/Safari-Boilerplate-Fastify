@@ -28,8 +28,10 @@ export const registerPlugins = async (fastify: FastifyInstance, silent?: boolean
     ].forEach(plugin => fastify.register(plugin));
 
     [
-        import('@services/log'),
+        import('@services/request'),
+        import('@services/error'),
         import('@services/query'),
+        import('@services/log'),
         import('@services/cache'),
         import('@services/auth'),
         import('@services/user'),
@@ -39,7 +41,7 @@ export const registerPlugins = async (fastify: FastifyInstance, silent?: boolean
         fastify.register(controller),
     );
 
-    [import('@hooks/onRequest/verifyAccessToken'), import('@hooks/onResponse/cleanUserState')].forEach(hook =>
+    [import('@hooks/preParsing'), import('@hooks/onRequest'), import('@hooks/onResponse')].forEach(hook =>
         fastify.register(hook),
     );
 

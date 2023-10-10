@@ -3,12 +3,12 @@ import { retry } from '@utils';
 import { randomUUID } from 'crypto';
 import type { FastifyPluginCallback, FastifyRequest as Request } from 'fastify';
 import plugin from 'fastify-plugin';
-import type { CheckAccessRights, LoggedUser, Login } from './types';
+import type { AccessRights, CheckAccessRights, GetAccessRights, GetUserToLogin, LoggedUser, Login, UserToLogin } from './types';
 import { buildLoginAttemptLogger } from './utils';
 
 export default plugin((async (fastify, opts, done) => {
     if (fastify.hasDecorator('authService')) return done();
-    const { cacheService, errorService, jsonWebToken, prismaService, bcrypt, prisma } = fastify;
+    const { cacheService, errorService, jsonWebToken, bcrypt, prisma } = fastify;
     const { unauthorized, tooManyRequests, forbidden } = errorService;
 
     // ------------------------------
@@ -31,7 +31,7 @@ export default plugin((async (fastify, opts, done) => {
         return { user, refreshToken, accessToken };
     };
     const refreshTokens = async () => {
-        const { isRevoked: _, password: __, ...user } = await prismaService.getUserToLogin(getUserId());
+        const { isRevoked: _, password: __, ...user } = await getUserToLoginById(getUserId());
         const tokenContent = generateTokenContent(user);
         const { refreshToken, accessToken } = await generateTokens(tokenContent);
         cacheService.deleteUserToken(getRefreshToken());
@@ -50,7 +50,7 @@ export default plugin((async (fastify, opts, done) => {
         await prisma.user.update({ where: { id: userId }, data: { isRevoked: revoke } });
     };
     const checkAccessRights: CheckAccessRights = async rights => {
-        const adminRights = await prismaService.getAccessRights(getUserRoleId());
+        const adminRights = await getAccessRights(getUserRoleId());
         if (!rights.every(right => adminRights.includes(right))) forbidden('ACCESS_DENIED');
     };
 
@@ -83,7 +83,7 @@ export default plugin((async (fastify, opts, done) => {
     };
 
     const verifyCredentials = async (username: string, password: string, ip: string) => {
-        const userToLogin = await prismaService.getUserToLogin(username);
+        const userToLogin = await getUserToLoginByName(username);
         if (!userToLogin) unauthorized('AUTH_INVALID_CREDENTIALS');
 
         const { isRevoked, password: passwordFromDb, ...user } = userToLogin;
@@ -101,6 +101,45 @@ export default plugin((async (fastify, opts, done) => {
         LogAttempt(user.id, ip);
         unauthorized('AUTH_INVALID_CREDENTIALS');
     };
+
+        const getUserToLoginByName: GetUserToLogin = async username => {
+            const { prisma } = fastify;
+            const user = await prisma.$queryRaw<Array<UserToLogin>>`
+                SELECT  
+                    u."id", u."username", u."password", u."email",
+                    json_build_object('id', u.role_id, 'name', r.name) AS role,
+                    u."revoked" AS "isRevoked"
+                FROM
+                    "User" u LEFT JOIN "Role" r ON u.role_id = r.id
+                WHERE
+                    u."username" = ${username};
+            `;
+            return user?.[0] ?? undefined;
+        };
+    
+        const getUserToLoginById: GetUserToLogin = async id => {
+            const { prisma } = fastify;
+            const user = await prisma.$queryRaw<Array<UserToLogin>>`
+                SELECT  
+                    u."id", u."username", u."password", u."email",
+                    json_build_object('id', u.role_id, 'name', r.name) AS role,
+                    u."revoked" AS "isRevoked"
+                FROM
+                    "User" u LEFT JOIN "Role" r ON u.role_id = r.id
+                WHERE
+                    u."id" = ${id};
+            `;
+            return user?.[0] ?? undefined;
+        };
+    
+        const getAccessRights: GetAccessRights = async userId => {
+            const { prisma } = fastify;
+            const { rights } = await prisma.role.findUnique({
+                where: { id: userId },
+                select: { rights: true },
+            });
+            return rights as Array<AccessRights>;
+        };
 
     fastify.decorate('authService', {
         login,

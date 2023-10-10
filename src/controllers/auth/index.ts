@@ -4,7 +4,8 @@ import { loginSchema, logoutSchema, refreshSchema } from './schemas';
 import type { LoginPayload } from './types';
 
 export default async (fastify: FastifyInstance) => {
-    const { authService, jsonWebToken } = fastify;
+    const { generateCookieOpts } = fastify.jsonWebToken;
+    const { login, logout, logoutAll, refreshTokens, verifyRefreshToken, getUserIp } = fastify.authService;
 
     fastify.route({
         method: 'POST',
@@ -12,11 +13,11 @@ export default async (fastify: FastifyInstance) => {
         schema: loginSchema,
         handler: async (request: Request<LoginPayload>, reply: Reply) => {
             const { password, username } = request.body;
-            const userClient = authService.getUserIp(request);
+            const userClient = getUserIp(request);
 
             try {
-                const { user, refreshToken, accessToken } = await authService.login(username, password, userClient);
-                reply.code(200).setCookie(refreshTokenName, refreshToken, jsonWebToken.generateCookieOpts()).send({
+                const { user, refreshToken, accessToken } = await login(username, password, userClient);
+                reply.code(200).setCookie(refreshTokenName, refreshToken, generateCookieOpts()).send({
                     user,
                     accessToken,
                 });
@@ -31,9 +32,8 @@ export default async (fastify: FastifyInstance) => {
         url: '/auth/logout',
         schema: logoutSchema,
         handler: async (request: Request, reply: Reply) => {
-            const { authService } = fastify;
             try {
-                await authService.logout();
+                await logout();
                 reply.code(200).clearCookie(refreshTokenName).send();
             } catch (e) {
                 reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
@@ -46,9 +46,8 @@ export default async (fastify: FastifyInstance) => {
         url: '/auth/logout/all',
         schema: logoutSchema,
         handler: async (request: Request, reply: Reply) => {
-            const { authService } = fastify;
             try {
-                await authService.logoutAll();
+                await logoutAll();
                 reply.code(200).clearCookie(refreshTokenName).send();
             } catch (e) {
                 reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
@@ -61,11 +60,10 @@ export default async (fastify: FastifyInstance) => {
         url: '/auth/refresh',
         schema: refreshSchema,
         handler: async (request: Request, reply: Reply) => {
-            const { authService, jsonWebToken } = fastify;
             try {
-                await authService.verifyRefreshToken(request);
-                const { user, refreshToken, accessToken } = await authService.refreshTokens();
-                reply.code(200).setCookie(refreshTokenName, refreshToken, jsonWebToken.generateCookieOpts()).send({
+                await verifyRefreshToken(request);
+                const { user, refreshToken, accessToken } = await refreshTokens();
+                reply.code(200).setCookie(refreshTokenName, refreshToken, generateCookieOpts()).send({
                     user,
                     accessToken,
                 });
