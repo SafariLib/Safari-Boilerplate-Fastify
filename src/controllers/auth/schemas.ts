@@ -1,5 +1,5 @@
+import { authorizationSchema } from '@schemas';
 import type { FastifySchema } from 'fastify';
-import { authorizationSchema } from '../../schemas';
 
 const loggedUser = {
     user: {
@@ -8,10 +8,14 @@ const loggedUser = {
             id: { type: 'number' },
             username: { type: 'string' },
             email: { type: 'string' },
-            role: { type: 'number' },
             avatarUrl: { type: 'string' },
-            createdAt: { type: 'string' },
-            updatedAt: { type: 'string' },
+            role: {
+                type: 'object',
+                property: {
+                    id: { type: 'number' },
+                    name: { type: 'string' },
+                },
+            },
         },
     },
     accessToken: {

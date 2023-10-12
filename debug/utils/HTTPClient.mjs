@@ -43,24 +43,19 @@ export default class HTTPClient {
         this.HEADERS['User-Agent'] = userAgent;
     }
 
-    testUserRevokedState = async () => {
+    testProtectedRouteAccess = async () => {
         const { res } = await this.GET(`/protected/ping`);
         return res.status === 200;
     };
 
-    testAdminRevokedState = async () => {
-        const { res } = await this.GET(`/protected/admin/ping`);
-        return res.status === 200;
-    };
-
     /**
-     * Connects to the API as a user
+     * Connects to the API
      * @param {string} username
      * @param {string} password
      * @returns {Promise<void>}
      **/
     async ConnectAsUser(username, password) {
-        const { res, json } = await this.POST('/auth/login/user', {
+        const { res, json } = await this.POST('/auth/login', {
             username,
             password: password ?? this.DefaultPassword,
         });
@@ -72,62 +67,22 @@ export default class HTTPClient {
     }
 
     /**
-     * Connects to the API as an admin
-     * @param {string} username
-     * @param {string} password
-     * @returns {Promise<void>}
-     **/
-    async ConnectAsAdmin(username, password) {
-        const { res, json } = await this.POST('/auth/login/admin', {
-            username,
-            password: password ?? this.DefaultPassword,
-        });
-        try {
-            this.setCookieToken(res.headers.get('set-cookie').split(';')[0].split('=')[1]);
-            this.setBearerToken(json.accessToken);
-        } catch {}
-        return { res, json };
-    }
-
-    /**
-     * Disconnects from the API as a user
+     * Disconnects from the API
      * @returns {Promise<void>}
      **/
     async DisconnectAsUser() {
-        const { res, json } = await this.GET('/auth/logout/user');
+        const { res, json } = await this.GET('/auth/logout');
         this.removeCookieToken();
         this.removeBearerToken();
         return { res, json };
     }
 
     /**
-     * Disconnects from the API as an admin
-     * @returns {Promise<void>}
-     */
-    async DisconnectAsAdmin() {
-        const { res, json } = await this.GET('/auth/logout/admin');
-        this.removeCookieToken();
-        this.removeBearerToken();
-        return { res, json };
-    }
-
-    /**
-     * Disconnects all clients from the API as a user
+     * Disconnects all clients from the API
      * @returns {Promise<void>}
      */
     async DisconnectAllAsUser() {
-        const { res, json } = await this.GET('/auth/logout/user/all');
-        this.removeCookieToken();
-        this.removeBearerToken();
-        return { res, json };
-    }
-
-    /**
-     * Disconnects all clients from the API as an admin
-     * @returns {Promise<void>}
-     */
-    async DisconnectAllAsAdmin() {
-        const { res, json } = await this.GET('/auth/logout/admin/all');
+        const { res, json } = await this.GET('/auth/logout/all');
         this.removeCookieToken();
         this.removeBearerToken();
         return { res, json };

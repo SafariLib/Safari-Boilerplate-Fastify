@@ -15,4 +15,3 @@ See [package.json](../package.json) scripts for further informations.
 :warning: **Tap** tests wont trigger the debugger as server injection isn't for debugging purposes. Use the debug folder with scripts and thunderclient to achieve that.
 
 -   [tap documentation](https://node-tap.org/basics/)
--   [Thunder-client documentation](https://github.com/rangav/thunder-client-support#thunder-client)

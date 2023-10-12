@@ -10,59 +10,47 @@ datasource db {
   url      = env("POSTGRES_URI")
 }
 
-model Admin {
-  id         Int       @id @default(autoincrement())
-  username   String    @unique @db.VarChar(32)
-  email      String    @unique @db.VarChar(64)
-  password   String    @db.VarChar(64)
-  avatar_url String?
-  revoked    Boolean   @default(false)
-  role_id    Int       
-  created_at DateTime  @default(now())
-  updated_at DateTime?
-	@@map("Admin")
-
-  // Relationship with AdminRole
-  role AdminRole @relation(fields: [role_id], references: [id])
-}
-
 model User {
-  id         Int       @id @default(autoincrement())
-  username   String    @unique @db.VarChar(32)
-  email      String    @unique @db.VarChar(64)
-  password   String    @db.VarChar(64)
-  avatar_url String?
-  revoked    Boolean   @default(false)
-  role_id    Int       
-  created_at DateTime  @default(now())
-  updated_at DateTime?
-	@@map("User")
+  id          Int       @id @default(autoincrement())
+  username    String    @unique @db.VarChar(32)
+  email       String    @unique @db.VarChar(64)
+  password    String    @db.VarChar(64)
+  avatarUrl   String?
+  isRevoked   Boolean   @default(false)
+  roleId      Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime?
+  updatedBy   Int?
 
-  // Relationship with UserRole
-  role UserRole @relation(fields: [role_id], references: [id])
+  // Relationships
+  role     Role      @relation(fields: [roleId], references: [id])
+  editLogs EditLog[]
+
+  @@map("User")
 }
 
-model AdminRole {
-  id         Int       @id @default(autoincrement())
-  name       String    @unique @db.VarChar(32)
-  is_default Boolean   @default(false)
-  rights     Int[]
-  created_at DateTime  @default(now())
-  updated_at DateTime?
-  @@map("AdminRole")
+model Role {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique @db.VarChar(32)
+  isDefault Boolean   @default(false)
+  rights    Int[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime?
+  users     User[]
 
-  // Relationship with Admin
-  admins Admin[]
+  @@map("Role")
 }
 
-model UserRole {
-  id         Int       @id @default(autoincrement())
-  name       String    @unique @db.VarChar(32)
-  is_default Boolean   @default(false)
-  created_at DateTime  @default(now())
-  updated_at DateTime?
-  @@map("UserRole")
+model EditLog {
+  id        Int      @id @default(autoincrement())
+  editorId  Int
+  editorIp  String   @db.VarChar(64)
+  table     String   @db.VarChar(32)
+  code      String   @db.VarChar(24)
+  createdAt DateTime @default(now())
 
-  // Relationship with User
-  users User[]
+  // Relationships
+  editor User @relation(fields: [editorId], references: [id])
+
+  @@map("EditLog")
 }

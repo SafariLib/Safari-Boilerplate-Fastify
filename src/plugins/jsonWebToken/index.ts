@@ -1,51 +1,8 @@
-import { CookieSerializeOptions } from '@fastify/cookie';
-import type { FastifyPluginCallback, FastifyRequest } from 'fastify';
+import type { FastifyPluginCallback } from 'fastify';
 import plugin from 'fastify-plugin';
-import jsonwebtoken, { Algorithm, SignOptions, VerifyOptions } from 'jsonwebtoken';
-
-export type SignToken<T> = (payload: T, opts: SignOptions, secret: string) => string;
-export type VerifyToken<T> = (token: string, opts: VerifyOptions, secret: string) => T;
-export type GetToken = (request: FastifyRequest) => string;
-export interface FastifyToken {
-    entity?: 'USER' | 'ADMIN';
-    token?: string;
-    content?: DecodedToken;
-}
-export interface DecodedToken extends TokenContent {
-    iat: number;
-    exp: number;
-}
-export interface TokenContent {
-    userId: number;
-    uuid: string;
-    role: number;
-}
-
-export const accessTokenName = 'accessToken';
-export const refreshTokenName = 'refreshToken';
-
-const algorithm = 'HS256' as Algorithm;
-const adminRefreshExpiresIn = 17600000; // 5 hours
-const adminAccessExpiresIn = 900000; // 15 minutes
-const userRefreshExpiresIn = 86400000; // 24 hours
-const userAccessExpiresIn = 1800000; // 30 minutes
-
-const defaultOpts = {
-    cookieOpts: {
-        signed: true,
-        httpOnly: false,
-        secure: true,
-        sameSite: 'strict',
-    } as CookieSerializeOptions,
-    signAdminAccessOpts: { algorithm, expiresIn: adminAccessExpiresIn },
-    signAdminRefreshOpts: { algorithm, expiresIn: adminRefreshExpiresIn },
-    signUserAccessOpts: { algorithm, expiresIn: userAccessExpiresIn },
-    signUserRefreshOpts: { algorithm, expiresIn: userRefreshExpiresIn },
-    verifyAdminAccessOpts: { algorithms: [algorithm], maxAge: adminAccessExpiresIn },
-    verifyAdminRefreshOpts: { algorithms: [algorithm], maxAge: adminRefreshExpiresIn },
-    verifyUserAccessOpts: { algorithms: [algorithm], maxAge: userAccessExpiresIn },
-    verifyUserRefreshOpts: { algorithms: [algorithm], maxAge: userRefreshExpiresIn },
-};
+import { sign, verify } from 'jsonwebtoken';
+import type { DecodedToken, FastifyToken, GetToken, JsonWebTokenPlugin, SignToken, VerifyToken } from './types';
+import { defaultOpts } from './utils';
 
 /**
  * @package jsonwebtoken
@@ -53,6 +10,7 @@ const defaultOpts = {
  */
 export default plugin((async (fastify, opts, done) => {
     if (fastify.hasDecorator('jsonWebToken')) return done();
+    const { unauthorized } = fastify.errorService;
 
     const tokens = {
         access: null as FastifyToken | null,
@@ -63,78 +21,47 @@ export default plugin((async (fastify, opts, done) => {
         },
     };
 
-    const generateUserCookieOpts = () => ({
+    const generateCookieOpts = () => ({
         ...defaultOpts.cookieOpts,
-        expires: new Date(Date.now() + defaultOpts.signUserRefreshOpts.expiresIn),
+        expires: new Date(Date.now() + defaultOpts.signRefreshOpts.expiresIn),
     });
 
-    const generateAdminCookieOpts = () => ({
-        ...defaultOpts.cookieOpts,
-        expires: new Date(Date.now() + defaultOpts.signAdminRefreshOpts.expiresIn),
-    });
+    const signToken: SignToken = (payload, opts, secret) => sign(payload, secret, opts);
 
-    const signToken: SignToken<TokenContent> = (payload, opts, secret) => jsonwebtoken.sign(payload, secret, opts);
-
-    const verifyToken: VerifyToken<DecodedToken> = (token, verifyOpts, secret) => {
-        const decoded = jsonwebtoken.verify(token, secret, verifyOpts) as DecodedToken;
-        if (!decoded || typeof decoded !== 'object') throw { errorCode: 'AUTH_TOKEN_INVALID', status: 401 };
-        else if (decoded.exp * 1000 < Date.now()) throw { errorCode: 'AUTH_TOKEN_EXPIRED', status: 401 };
-        else return decoded;
+    const verifyToken: VerifyToken = (token, verifyOpts, secret) => {
+        const decoded = verify(token, secret, verifyOpts) as DecodedToken;
+        if (!decoded || typeof decoded !== 'object') unauthorized('AUTH_TOKEN_INVALID');
+        else if (decoded.exp * 1000 < Date.now()) unauthorized('AUTH_TOKEN_EXPIRED');
+        else return { token, decoded };
     };
 
     const getAccessToken: GetToken = request => {
         const { authorization } = request.headers;
-        if (!authorization) throw { errorCode: 'AUTH_HEADERS_EMPTY', status: 401 };
+        if (!authorization) unauthorized('AUTH_HEADERS_EMPTY');
         return (authorization as string).split(' ')[1];
     };
 
     const getRefreshToken: GetToken = request => {
         const { refreshToken: refreshTokenCookie } = request.cookies;
-        if (!refreshTokenCookie) throw { errorCode: 'AUTH_COOKIE_EMPTY', status: 401 };
+        if (!refreshTokenCookie) unauthorized('AUTH_COOKIE_EMPTY');
         const { value: refreshToken, valid: isValid } = fastify.unsignCookie(refreshTokenCookie);
-        if (!isValid) throw { errorCode: 'AUTH_COOKIE_INVALID', status: 401 };
+        if (!isValid) unauthorized('AUTH_COOKIE_INVALID');
         return refreshToken;
     };
 
     fastify.decorate('jsonWebToken', {
         getAccessToken,
         getRefreshToken,
-        generateUserCookieOpts,
-        generateAdminCookieOpts,
-        signUserAccessToken: (token, secret) => signToken(token, defaultOpts.signUserAccessOpts, secret),
-        signUserRefreshToken: (token, secret) => signToken(token, defaultOpts.signUserRefreshOpts, secret),
-        signAdminAccessToken: (token, secret) => signToken(token, defaultOpts.signAdminAccessOpts, secret),
-        signAdminRefreshToken: (token, secret) => signToken(token, defaultOpts.signAdminRefreshOpts, secret),
-        verifyUserAccessToken: (token, secret) => verifyToken(token, defaultOpts.verifyUserAccessOpts, secret),
-        verifyUserRefreshToken: (token, secret) => verifyToken(token, defaultOpts.verifyUserRefreshOpts, secret),
-        verifyAdminAccessToken: (token, secret) => verifyToken(token, defaultOpts.verifyAdminAccessOpts, secret),
-        verifyAdminRefreshToken: (token, secret) => verifyToken(token, defaultOpts.verifyAdminRefreshOpts, secret),
+        generateCookieOpts,
+        signAccessToken: (token, secret) => signToken(token, defaultOpts.signAccessOpts, secret),
+        signRefreshToken: (token, secret) => signToken(token, defaultOpts.signRefreshOpts, secret),
+        verifyAccessToken: (token, secret) => verifyToken(token, defaultOpts.verifyAccessOpts, secret),
+        verifyRefreshToken: (token, secret) => verifyToken(token, defaultOpts.verifyRefreshOpts, secret),
         tokens,
         defaultOpts,
     });
     done();
 }) as FastifyPluginCallback);
-
-interface JsonWebTokenPlugin {
-    getAccessToken: GetToken;
-    getRefreshToken: GetToken;
-    generateUserCookieOpts: () => CookieSerializeOptions;
-    generateAdminCookieOpts: () => CookieSerializeOptions;
-    signUserAccessToken: (token: TokenContent, secret: string) => string;
-    signUserRefreshToken: (token: TokenContent, secret: string) => string;
-    signAdminAccessToken: (token: TokenContent, secret: string) => string;
-    signAdminRefreshToken: (token: TokenContent, secret: string) => string;
-    verifyUserAccessToken: (token: string, secret: string) => DecodedToken;
-    verifyUserRefreshToken: (token: string, secret: string) => DecodedToken;
-    verifyAdminAccessToken: (token: string, secret: string) => DecodedToken;
-    verifyAdminRefreshToken: (token: string, secret: string) => DecodedToken;
-    tokens: {
-        access: FastifyToken | null;
-        refresh: FastifyToken | null;
-        cleanState: () => void;
-    };
-    defaultOpts: typeof defaultOpts;
-}
 
 declare module 'fastify' {
     interface FastifyInstance {

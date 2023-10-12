@@ -1,14 +1,17 @@
 import { AccessRights } from '@services/auth/types';
-import { adminPrefix } from '@utils';
 import type { FastifyInstance, FastifyReply as Reply, FastifyRequest as Request } from 'fastify';
-import { activateUser, getUserById, getUsers, revokeUser } from './schemas';
+import { activateUserSchema, getUserByIdSchema, getUsersSchema, revokeUserSchema } from './schemas';
 import type { GetPaginatedUsersPayload, GetUserByIdPayload } from './types';
 
 export default async (fastify: FastifyInstance) => {
+    const { protectedPrefix } = fastify.requestService;
+    const { getUserById } = fastify.userService;
+    const { activateUser, revokeUser, checkAccessRights } = fastify.authService;
+
     fastify.route({
         method: 'GET',
-        url: `${adminPrefix}/user`,
-        schema: getUsers,
+        url: `${protectedPrefix}/user`,
+        schema: getUsersSchema,
         handler: async (request: Request<GetPaginatedUsersPayload>, reply: Reply) => {
             const { userService } = fastify;
             try {
@@ -22,28 +25,12 @@ export default async (fastify: FastifyInstance) => {
 
     fastify.route({
         method: 'GET',
-        url: `${adminPrefix}/admin`,
-        schema: getUsers,
-        handler: async (request: Request<GetPaginatedUsersPayload>, reply: Reply) => {
-            const { userService } = fastify;
-            try {
-                const admins = await userService.getPaginatedAdmins(request.query);
-                reply.code(200).send(admins);
-            } catch (e) {
-                reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
-            }
-        },
-    });
-
-    fastify.route({
-        method: 'GET',
-        url: `${adminPrefix}/user/:id`,
-        schema: getUserById,
+        url: `${protectedPrefix}/user/:id`,
+        schema: getUserByIdSchema,
         handler: async (request: Request<GetUserByIdPayload>, reply: Reply) => {
-            const { userService } = fastify;
             const { id } = request.params;
             try {
-                const user = await userService.getUserById(Number(id));
+                const user = await getUserById(Number(id));
                 reply.code(200).send(user);
             } catch (e) {
                 reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
@@ -52,30 +39,12 @@ export default async (fastify: FastifyInstance) => {
     });
 
     fastify.route({
-        method: 'GET',
-        url: `${adminPrefix}/admin/:id`,
-        schema: getUserById,
-        handler: async (request: Request<GetUserByIdPayload>, reply: Reply) => {
-            const { userService } = fastify;
-            const { id } = request.params;
-            try {
-                const admin = await userService.getAdminById(Number(id));
-                reply.code(200).send(admin);
-            } catch (e) {
-                reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
-            }
-        },
-    });
-
-    fastify.route({
         method: 'PATCH',
-        url: `${adminPrefix}/user/:id/revoke`,
-        schema: revokeUser,
+        url: `${protectedPrefix}/user/:id/revoke`,
+        schema: revokeUserSchema,
         handler: async (request: Request<GetUserByIdPayload>, reply: Reply) => {
-            const { revokeUser, checkAdminAccessRights } = fastify.authService;
             const { id } = request.params;
-            await checkAdminAccessRights([AccessRights.RevokeUser]);
-
+            await checkAccessRights([AccessRights.RevokeUser]);
             try {
                 await revokeUser(Number(id));
                 reply.code(200);
@@ -87,51 +56,13 @@ export default async (fastify: FastifyInstance) => {
 
     fastify.route({
         method: 'PATCH',
-        url: `${adminPrefix}/user/:id/activate`,
-        schema: activateUser,
+        url: `${protectedPrefix}/user/:id/activate`,
+        schema: activateUserSchema,
         handler: async (request: Request<GetUserByIdPayload>, reply: Reply) => {
-            const { activateUser, checkAdminAccessRights } = fastify.authService;
             const { id } = request.params;
-            await checkAdminAccessRights([AccessRights.RevokeUser]);
-
+            await checkAccessRights([AccessRights.RevokeUser]);
             try {
                 await activateUser(Number(id));
-                reply.code(200);
-            } catch (e) {
-                reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
-            }
-        },
-    });
-
-    fastify.route({
-        method: 'PATCH',
-        url: `${adminPrefix}/admin/:id/revoke`,
-        schema: revokeUser,
-        handler: async (request: Request<GetUserByIdPayload>, reply: Reply) => {
-            const { revokeAdmin, checkAdminAccessRights } = fastify.authService;
-            const { id } = request.params;
-            await checkAdminAccessRights([AccessRights.RevokeAdmin]);
-
-            try {
-                await revokeAdmin(Number(id));
-                reply.code(200);
-            } catch (e) {
-                reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
-            }
-        },
-    });
-
-    fastify.route({
-        method: 'PATCH',
-        url: `${adminPrefix}/admin/:id/activate`,
-        schema: activateUser,
-        handler: async (request: Request<GetUserByIdPayload>, reply: Reply) => {
-            const { activateAdmin, checkAdminAccessRights } = fastify.authService;
-            const { id } = request.params;
-            await checkAdminAccessRights([AccessRights.RevokeAdmin]);
-
-            try {
-                await activateAdmin(Number(id));
                 reply.code(200);
             } catch (e) {
                 reply.code(e?.status ?? 500).send({ message: e?.errorCode ?? e });
