@@ -3,7 +3,7 @@ import { retry } from '@utils';
 import { randomUUID } from 'crypto';
 import type { FastifyPluginCallback, FastifyRequest as Request } from 'fastify';
 import plugin from 'fastify-plugin';
-import type { AccessRights, CheckAccessRights, GetAccessRights, GetUserToLogin, LoggedUser, Login, UserToLogin } from './types';
+import type { AccessRights, CheckAccessRights, GetUserToLogin, LoggedUser, Login, UserToLogin } from './types';
 import { buildLoginAttemptLogger } from './utils';
 
 export default plugin((async (fastify, opts, done) => {
@@ -45,10 +45,11 @@ export default plugin((async (fastify, opts, done) => {
         tokens.refresh = verifyRefreshToken(token, secret);
     };
     const toggleRevokeState = async (userId: number, revoke: boolean) => {
-        // TODO: Check if user is admin and if he has the rights to revoke/activate the user
-        // The user entity should be checked too, maybe check with prisma hooks?
+        const { roleId } = await prisma.user.findUnique({ where: { id: userId }, select: { roleId: true } });
+        if (roleId === 1) forbidden('ACCESS_DENIED');
         await prisma.user.update({ where: { id: userId }, data: { isRevoked: revoke } });
     };
+
     const checkAccessRights: CheckAccessRights = async rights => {
         const adminRights = await getAccessRights(getUserRoleId());
         if (!rights.every(right => adminRights.includes(right))) forbidden('ACCESS_DENIED');
@@ -93,18 +94,20 @@ export default plugin((async (fastify, opts, done) => {
             role: user.role.id,
         };
 
+        if (isRevoked) unauthorized('AUTH_USER_REVOKED');
+
         if (hasTooManyAttemps(userToLogin.id, ip)) tooManyRequests('AUTH_TOO_MANY_ATTEMPTS');
         const passwordMatch = await bcrypt.compareStrings(password, passwordFromDb);
 
-        if (!isRevoked || passwordMatch) return { tokenContent, user };
+        if (passwordMatch) return { tokenContent, user };
 
         LogAttempt(user.id, ip);
         unauthorized('AUTH_INVALID_CREDENTIALS');
     };
 
-        const getUserToLoginByName: GetUserToLogin = async username => {
-            const { prisma } = fastify;
-            const user = await prisma.$queryRaw<Array<UserToLogin>>`
+    const getUserToLoginByName: GetUserToLogin = async username => {
+        const { prisma } = fastify;
+        const user = await prisma.$queryRaw<Array<UserToLogin>>`
                 SELECT  
                     u."id", u."username", u."password", u."email",
                     json_build_object('id', u.role_id, 'name', r.name) AS role,
@@ -114,12 +117,12 @@ export default plugin((async (fastify, opts, done) => {
                 WHERE
                     u."username" = ${username};
             `;
-            return user?.[0] ?? undefined;
-        };
-    
-        const getUserToLoginById: GetUserToLogin = async id => {
-            const { prisma } = fastify;
-            const user = await prisma.$queryRaw<Array<UserToLogin>>`
+        return user?.[0] ?? undefined;
+    };
+
+    const getUserToLoginById: GetUserToLogin = async id => {
+        const { prisma } = fastify;
+        const user = await prisma.$queryRaw<Array<UserToLogin>>`
                 SELECT  
                     u."id", u."username", u."password", u."email",
                     json_build_object('id', u.role_id, 'name', r.name) AS role,
@@ -129,17 +132,17 @@ export default plugin((async (fastify, opts, done) => {
                 WHERE
                     u."id" = ${id};
             `;
-            return user?.[0] ?? undefined;
-        };
-    
-        const getAccessRights: GetAccessRights = async userId => {
-            const { prisma } = fastify;
-            const { rights } = await prisma.role.findUnique({
-                where: { id: userId },
-                select: { rights: true },
-            });
-            return rights as Array<AccessRights>;
-        };
+        return user?.[0] ?? undefined;
+    };
+
+    const getAccessRights = async (userId?: number) => {
+        const results = await prisma.$queryRaw<Array<{ userAccess: Array<number> }>>`
+            SELECT r."rights" as userAccess
+            FROM "User" u LEFT JOIN "Role" r ON u."roleId" = r."id"
+            WHERE u."id" = ${userId ?? getUserId()};
+        `;
+        return (results?.[0]?.userAccess ?? []) as Array<AccessRights>;
+    };
 
     fastify.decorate('authService', {
         login,

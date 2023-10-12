@@ -45,7 +45,6 @@ export default async (fastify: FastifyInstance) => {
         handler: async (request: Request<GetUserByIdPayload>, reply: Reply) => {
             const { id } = request.params;
             await checkAccessRights([AccessRights.RevokeUser]);
-
             try {
                 await revokeUser(Number(id));
                 reply.code(200);
@@ -62,7 +61,6 @@ export default async (fastify: FastifyInstance) => {
         handler: async (request: Request<GetUserByIdPayload>, reply: Reply) => {
             const { id } = request.params;
             await checkAccessRights([AccessRights.RevokeUser]);
-
             try {
                 await activateUser(Number(id));
                 reply.code(200);
