@@ -19,9 +19,8 @@ const userSchema = {
         email: { type: 'string' },
         role: roleSchema,
         avatarUrl: { type: 'string' },
-        revoked: { type: 'boolean' },
+        isRevoked: { type: 'boolean' },
         createdAt: { type: 'string' },
-        updatedAt: { type: 'string' },
     },
 };
 

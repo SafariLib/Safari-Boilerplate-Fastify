@@ -16,12 +16,11 @@ model User {
   email       String    @unique @db.VarChar(64)
   password    String    @db.VarChar(64)
   avatarUrl   String?
-  isRevoked     Boolean   @default(false)
+  isRevoked   Boolean   @default(false)
   roleId      Int
   createdAt   DateTime  @default(now())
   updatedAt   DateTime?
   updatedBy   Int?
-  updaterType String?   @default("SYSTEM") @db.VarChar(12)
 
   // Relationships
   role     Role      @relation(fields: [roleId], references: [id])

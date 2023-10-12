@@ -18,7 +18,6 @@ export const registerPlugins = async (fastify: FastifyInstance, silent?: boolean
         import('@plugins/fastifyRateLimit'),
         import('@plugins/jsonWebToken'),
         import('@plugins/bcrypt'),
-        import('@services/query'),
         import('@services/cache'),
         import('@services/log'),
         import('@services/auth'),

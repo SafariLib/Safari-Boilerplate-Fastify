@@ -1,25 +1,27 @@
-import type { GetPaginatedUsersPayload } from '../../controllers/user/types';
+import type { GetPaginatedUsersPayload } from '@controllers/user/types';
 
-export interface GetUser {
+export interface ReducedUser {
     id: number;
     username: string;
     email: string;
+    avatarUrl: string;
+    isRevoked: boolean;
     role: {
         id: number;
         name: string;
     };
-    avatarUrl: string;
-    revoked: boolean;
-    createdAt: string;
-    updatedAt: string;
+    createdAt: Date;
 }
 
-export interface GetAdmin extends GetUser {}
+export type GetUserById = (id: number) => Promise<ReducedUser>;
 
-export type GetUserById = (id: number) => Promise<GetUser>;
+export type GetPaginatedUsers = (payload: GetPaginatedUsersPayload['Querystring']) => Promise<Array<ReducedUser>>;
 
-export type GetPaginatedUsers = (payload: GetPaginatedUsersPayload['Querystring']) => Promise<Array<GetUser>>;
+export type GetRoles = () => Promise<Array<{ id: number; name: string }>>;
 
-export type GetAdminRoles = () => Promise<Array<{ id: number; name: string }>>;
+export type CreateUser = (payload: { username: string; email: string; roleId: number }) => Promise<ReducedUser>;
 
-export type CreateAdmin = (payload: { username: string; email: string; roleId: number }) => Promise<GetAdmin>;
+export interface UserService {
+    getUserById: GetUserById;
+    getPaginatedUsers: GetPaginatedUsers;
+}
