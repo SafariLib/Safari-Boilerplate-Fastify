@@ -57,6 +57,9 @@
             "@plugins/*": [
                 "src/plugins/*"
             ],
+            "@dependencies/*": [
+                "src/plugins/dependencies/*"
+            ],
             "@services/*": [
                 "src/services/*"
             ]

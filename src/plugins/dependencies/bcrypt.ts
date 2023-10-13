@@ -1,17 +1,23 @@
 import bcrypt from 'bcryptjs';
 import type { FastifyPluginCallback } from 'fastify';
 import plugin from 'fastify-plugin';
-import type { Bcrypt, CompareStrings, HashString } from './types';
+
+export interface BcryptPluginOpts {
+    saltRounds: number;
+}
+
+export type HashString = (string: string) => Promise<string>;
+export type CompareStrings = (s1: string, s2: string) => Promise<boolean>;
 
 /**
- * @package bcryptjs
+ * Bcrypt
  * @see https://github.com/kelektiv/node.bcrypt.js
  */
-export default plugin((async (fastify, opts, done) => {
+export default plugin((async (fastify, opts: BcryptPluginOpts, done) => {
     if (fastify.hasDecorator('bcrypt')) return done();
 
     const hashString: HashString = async string => {
-        const salt = await bcrypt.genSalt(10);
+        const salt = await bcrypt.genSalt(opts.saltRounds);
         return await bcrypt.hash(string, salt);
     };
 
@@ -25,6 +31,9 @@ export default plugin((async (fastify, opts, done) => {
 
 declare module 'fastify' {
     interface FastifyInstance {
-        bcrypt: Bcrypt;
+        bcrypt: {
+            hashString: HashString;
+            compareStrings: CompareStrings;
+        };
     }
 }
