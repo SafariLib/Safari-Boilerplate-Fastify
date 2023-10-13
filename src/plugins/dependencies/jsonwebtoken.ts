@@ -1,12 +1,12 @@
-import type { UnsignResult } from '@fastify/cookie';
+import type { CookieSerializeOptions, UnsignResult } from '@fastify/cookie';
 import type { FastifyPluginCallback, FastifyRequest } from 'fastify';
 import plugin from 'fastify-plugin';
-import type { SignOptions, VerifyOptions } from 'jsonwebtoken';
+import type { Algorithm, SignOptions, VerifyOptions } from 'jsonwebtoken';
 import { sign, verify } from 'jsonwebtoken';
 
 export interface JsonWebTokenPluginOpts {
     algorithm: Algorithm;
-    accessToken: {
+    bearerToken: {
         name: string;
         expiresIn: number;
     };
@@ -22,7 +22,6 @@ export interface TokenState {
     userId: number;
     bearerValidity: Date;
     refreshValidity: Date;
-    revoke: () => void;
 }
 
 export interface TokenContent {
@@ -38,8 +37,12 @@ export interface DecodedToken extends TokenContent {
 
 export type SignToken = (payload: TokenContent, opts: SignOptions, secret: string) => string;
 export type VerifyToken = (token: string, opts: VerifyOptions, secret: string) => DecodedToken;
-export type GetBearerToken = (request: FastifyRequest) => string;
-export type GetRefreshToken = (request: FastifyRequest) => UnsignResult;
+export type GetBearerTokenFromRequest = (request: FastifyRequest) => string;
+export type GetRefreshTokenFromRequest = (request: FastifyRequest) => UnsignResult;
+export type GetUserTokens = (userId: number, token: string) => TokenState;
+export type RevokeUserTokens = (userId: number, token: string) => void;
+export type SetUserTokens = (userId: number, bearerToken: string, refreshToken: string) => void;
+export type GenerateCookieOpts = () => CookieSerializeOptions;
 
 /**
  * @package jsonwebtoken
@@ -51,7 +54,31 @@ export default plugin((async (fastify, opts: JsonWebTokenPluginOpts, done) => {
 
     const tokens = new Array<TokenState>();
 
-    const generateCookieOpts = () => ({
+    const getUserTokensByBearer: GetUserTokens = (userId, token) =>
+        tokens.find(tk => tk.userId === userId && tk.bearerToken === token);
+
+    const getUserTokensByRefresh: GetUserTokens = (userId, token) =>
+        tokens.find(tk => tk.userId === userId && tk.refreshToken === token);
+
+    const revokeUserTokensByBearer: RevokeUserTokens = (userId, token) => {
+        const index = tokens.findIndex(tk => tk.userId === userId && tk.bearerToken === token);
+        if (index === -1) return;
+        tokens.splice(index, 1);
+    };
+
+    const revokeUserTokensByRefresh: RevokeUserTokens = (userId, token) => {
+        const index = tokens.findIndex(tk => tk.userId === userId && tk.refreshToken === token);
+        if (index === -1) return;
+        tokens.splice(index, 1);
+    };
+
+    const setUserTokens: SetUserTokens = (userId, bearerToken, refreshToken) => {
+        const bearerValidity = new Date(Date.now() + opts.bearerToken.expiresIn);
+        const refreshValidity = new Date(Date.now() + opts.refreshToken.expiresIn);
+        tokens.push({ bearerToken, refreshToken, userId, bearerValidity, refreshValidity });
+    };
+
+    const generateCookieOpts: GenerateCookieOpts = () => ({
         ...cookieSerializeOpts,
         expires: new Date(Date.now() + opts.refreshToken.expiresIn),
     });
@@ -60,15 +87,40 @@ export default plugin((async (fastify, opts: JsonWebTokenPluginOpts, done) => {
 
     const verifyToken: VerifyToken = (token, verifyOpts, secret) => verify(token, secret, verifyOpts) as DecodedToken;
 
-    const getBearerToken: GetBearerToken = request => (request.headers.authorization as string).split(' ')[1];
-    const getRefreshToken: GetRefreshToken = request => fastify.unsignCookie(request.cookies[opts.refreshToken.name]);
+    const getBearerTokenFromRequest: GetBearerTokenFromRequest = request =>
+        (request.headers.authorization as string).split(' ')[1];
 
-    fastify.decorate('jwt', {});
+    const getRefreshTokenFromRequest: GetRefreshTokenFromRequest = request =>
+        fastify.unsignCookie(request.cookies[opts.refreshToken.name]);
+
+    fastify.decorate('jwt', {
+        getUserTokensByBearer,
+        getUserTokensByRefresh,
+        revokeUserTokensByBearer,
+        revokeUserTokensByRefresh,
+        setUserTokens,
+        generateCookieOpts,
+        signToken,
+        verifyToken,
+        getBearerTokenFromRequest,
+        getRefreshTokenFromRequest,
+    });
     done();
 }) as FastifyPluginCallback);
 
 declare module 'fastify' {
     interface FastifyInstance {
-        // jwt: {};
+        jwt: {
+            getUserTokensByBearer: GetUserTokens;
+            getUserTokensByRefresh: GetUserTokens;
+            revokeUserTokensByBearer: RevokeUserTokens;
+            revokeUserTokensByRefresh: RevokeUserTokens;
+            setUserTokens: SetUserTokens;
+            generateCookieOpts: GenerateCookieOpts;
+            signToken: SignToken;
+            verifyToken: VerifyToken;
+            getBearerTokenFromRequest: GetBearerTokenFromRequest;
+            getRefreshTokenFromRequest: GetRefreshTokenFromRequest;
+        };
     }
 }

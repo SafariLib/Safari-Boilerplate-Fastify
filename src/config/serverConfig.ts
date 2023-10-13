@@ -4,6 +4,7 @@ import type { FastifyRateLimitPluginOpts } from '@dependencies/fastifyRateLimit'
 import type { RedisPluginOpts } from '@dependencies/fastifyRedis';
 import type { FastifySwaggerPluginOpts } from '@dependencies/fastifySwagger';
 import type { FastifySwaggerUIPluginOpts } from '@dependencies/fastifySwaggerUI';
+import type { JsonWebTokenPluginOpts } from '@dependencies/jsonwebtoken';
 import type { PrismaPluginOpts } from '@dependencies/prisma';
 
 export const serverConfig: ServerConfig = {
@@ -19,7 +20,17 @@ export const serverConfig: ServerConfig = {
             sameSite: 'strict',
         },
     },
-    // jsonwebtoken: {},
+    jsonwebtoken: {
+        algorithm: 'HS256',
+        bearerToken: {
+            name: 'bearerToken',
+            expiresIn: 1800000, // 30 minutes
+        },
+        refreshToken: {
+            name: 'refreshToken',
+            expiresIn: 86400000, // 24 hours
+        },
+    },
     prisma: {
         clientOpts: {
             log: [{ level: 'query', emit: 'event' }],
@@ -62,7 +73,7 @@ export const serverConfig: ServerConfig = {
 interface ServerConfig {
     bcrypt: BcryptPluginOpts;
     cookie: FastifyCookiePluginOpts;
-    // jsonwebtoken: {};
+    jsonwebtoken: JsonWebTokenPluginOpts;
     prisma: PrismaPluginOpts;
     rateLimit: FastifyRateLimitPluginOpts;
     redis: RedisPluginOpts;
