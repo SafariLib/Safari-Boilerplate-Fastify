@@ -1,5 +1,5 @@
 ----------------------------------------------
--- CreateTables
+-- CreateTable
 ----------------------------------------------
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
@@ -12,15 +12,15 @@ CREATE TABLE "User" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3),
     "updatedBy" INTEGER,
-    "updaterType" VARCHAR(12) DEFAULT 'SYSTEM',
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 CREATE TABLE "Role" (
     "id" SERIAL NOT NULL,
     "name" VARCHAR(32) NOT NULL,
+    "level" INTEGER NOT NULL DEFAULT 3,
     "isDefault" BOOLEAN NOT NULL DEFAULT false,
-    "rights" INTEGER ARRAY,
+    "rights" INTEGER[],
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3),
 
@@ -36,20 +36,23 @@ CREATE TABLE "EditLog" (
 
     CONSTRAINT "EditLog_pkey" PRIMARY KEY ("id")
 );
+
 ----------------------------------------------
 -- CreateIndex
 ----------------------------------------------
 CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 CREATE UNIQUE INDEX "Role_name_key" ON "Role"("name");
+
 ----------------------------------------------
 -- AddForeignKey
 ----------------------------------------------
 ALTER TABLE "User" ADD CONSTRAINT "User_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "Role"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "EditLog" ADD CONSTRAINT "EditLog_editorId_fkey" FOREIGN KEY ("editorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
 ----------------------------------------------
--- InsertData
+-- SeedData
 ----------------------------------------------
-INSERT INTO "Role" ("id", "name", "isDefault") VALUES ('1', 'Utilisateur', true);
-INSERT INTO "Role" ("id", "name", "isDefault", "rights") VALUES ('2', 'Administrateur', false, '{1,3}');
-INSERT INTO "Role" ("id", "name", "isDefault", "rights") VALUES ('3', 'Super Administrateur', false, '{1,2,3,4}');
+INSERT INTO "Role" ("id", "name", "isDefault", "level") VALUES ('1', 'Utilisateur', true, 3);
+INSERT INTO "Role" ("id", "name", "isDefault", "level", "rights") VALUES ('2', 'Administrateur', false, 2, '{1,3}');
+INSERT INTO "Role" ("id", "name", "isDefault", "level", "rights") VALUES ('3', 'Super Administrateur', false, 1, '{1,2,3,4}');

@@ -72,7 +72,7 @@ export default plugin((async (fastify, _, done) => {
 
     fastify.setErrorHandler((error, _, reply) => {
         const { statusCode, message } = error;
-        reply.code(statusCode).send({ message });
+        reply.code(statusCode ?? 500).send(message ? { message } : undefined);
     });
 
     done();
@@ -80,5 +80,4 @@ export default plugin((async (fastify, _, done) => {
 
 declare module 'fastify' {
     interface FastifyInstance extends ErrorHandlers {}
-    interface FastifyReply extends ErrorHandlers {}
 }

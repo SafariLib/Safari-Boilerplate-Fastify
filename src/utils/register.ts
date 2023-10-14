@@ -8,26 +8,9 @@ export const registerPlugins = async (fastify: FastifyInstance, silent?: boolean
     !silent && console.log();
     !silent && console.log('> Registering plugins...');
 
-    [
-        import('@plugins/dbConnector'),
-        import('@plugins/fastifyRedis'),
-        import('@plugins/fastifyCookie'),
-        import('@plugins/fastifySwagger'),
-        import('@services/error'),
-        import('@services/request'),
-        import('@plugins/fastifyRateLimit'),
-        import('@plugins/jsonWebToken'),
-        import('@plugins/bcrypt'),
-        import('@services/cache'),
-        import('@services/log'),
-        import('@services/auth'),
-        import('@services/user'),
-        import('@hooks/onRequest'),
-        import('@hooks/onResponse'),
-        import('@controllers/debug'),
-        import('@controllers/auth'),
-        import('@controllers/user'),
-    ].forEach(async plugin => await fastify.register(plugin));
+    [import('@config/registerDependencies'), import('@plugins/error'), import('@plugins/authorization')].forEach(
+        async plugin => await fastify.register(plugin),
+    );
 
     !silent && console.log('Plugins successfully registered');
 

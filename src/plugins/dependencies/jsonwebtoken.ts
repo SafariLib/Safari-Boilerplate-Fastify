@@ -8,26 +8,32 @@ export interface JsonWebTokenPluginOpts {
     algorithm: Algorithm;
     bearerToken: {
         name: string;
+        secret?: string;
         expiresIn: number;
     };
     refreshToken: {
         name: string;
+        secret?: string;
         expiresIn: number;
     };
 }
 
-export interface TokenState {
-    bearerToken: string;
-    refreshToken: string;
+export interface Session {
+    bearer: {
+        token: string;
+        validity: Date;
+    };
+    refresh: {
+        token: string;
+        validity: Date;
+    };
     userId: number;
-    bearerValidity: Date;
-    refreshValidity: Date;
 }
 
 export interface TokenContent {
     userId: number;
     uuid: string;
-    role: number;
+    roleId: number;
 }
 
 export interface DecodedToken extends TokenContent {
@@ -35,13 +41,26 @@ export interface DecodedToken extends TokenContent {
     exp: number;
 }
 
+export interface VerifiedToken {
+    content: DecodedToken;
+    string: string;
+    isRegistered: () => boolean;
+    isValid: () => boolean;
+    isExpired: () => boolean;
+    revoke: () => void;
+}
+
 export type SignToken = (payload: TokenContent, opts: SignOptions, secret: string) => string;
-export type VerifyToken = (token: string, opts: VerifyOptions, secret: string) => DecodedToken;
+export type VerifyToken = (
+    token: string,
+    opts: VerifyOptions,
+    secret: string,
+    type: 'Bearer' | 'Refresh',
+) => VerifiedToken;
 export type GetBearerTokenFromRequest = (request: FastifyRequest) => string;
 export type GetRefreshTokenFromRequest = (request: FastifyRequest) => UnsignResult;
-export type GetUserTokens = (userId: number, token: string) => TokenState;
-export type RevokeUserTokens = (userId: number, token: string) => void;
-export type SetUserTokens = (userId: number, bearerToken: string, refreshToken: string) => void;
+export type RevokeSession = (userId: number | string) => void;
+export type RegisterTokens = (userId: number, bearerToken: string, refreshToken: string) => void;
 export type GenerateCookieOpts = () => CookieSerializeOptions;
 
 /**
@@ -52,30 +71,39 @@ export default plugin((async (fastify, opts: JsonWebTokenPluginOpts, done) => {
     if (fastify.hasDecorator('jwt')) return done();
     const { cookieSerializeOpts } = fastify;
 
-    const tokens = new Array<TokenState>();
+    const bearerSecret = opts.bearerToken.secret ?? Math.random().toString(36).slice(2);
+    const refreshSecret = opts.refreshToken.secret ?? Math.random().toString(36).slice(2);
+    const signBearerOpts = { algorithm: opts.algorithm, expiresIn: opts.bearerToken.expiresIn };
+    const signRefreshOpts = { algorithm: opts.algorithm, expiresIn: opts.refreshToken.expiresIn };
+    const verifyBearerOpts = { algorithms: [opts.algorithm], maxAge: opts.bearerToken.expiresIn };
+    const verifyRefreshOpts = { algorithms: [opts.algorithm], maxAge: opts.refreshToken.expiresIn };
 
-    const getUserTokensByBearer: GetUserTokens = (userId, token) =>
-        tokens.find(tk => tk.userId === userId && tk.bearerToken === token);
+    const sessions = new Array<Session>();
 
-    const getUserTokensByRefresh: GetUserTokens = (userId, token) =>
-        tokens.find(tk => tk.userId === userId && tk.refreshToken === token);
-
-    const revokeUserTokensByBearer: RevokeUserTokens = (userId, token) => {
-        const index = tokens.findIndex(tk => tk.userId === userId && tk.bearerToken === token);
-        if (index === -1) return;
-        tokens.splice(index, 1);
+    const revokeSession: RevokeSession = payload => {
+        if (typeof payload === 'string') {
+            const index = sessions.findIndex(({ bearer }) => bearer.token === payload);
+            sessions.splice(index, 1);
+        } else if (typeof payload === 'number') {
+            const userTokens = sessions.filter(({ userId: id }) => id === payload);
+            for (const { bearer, refresh, userId: id } of userTokens) {
+                const index = sessions.findIndex(
+                    ({ bearer: b, refresh: r, userId: i }) =>
+                        i === id && b.token === bearer.token && r.token === refresh.token,
+                );
+                sessions.splice(index, 1);
+            }
+        }
     };
 
-    const revokeUserTokensByRefresh: RevokeUserTokens = (userId, token) => {
-        const index = tokens.findIndex(tk => tk.userId === userId && tk.refreshToken === token);
-        if (index === -1) return;
-        tokens.splice(index, 1);
-    };
-
-    const setUserTokens: SetUserTokens = (userId, bearerToken, refreshToken) => {
+    const registerTokens: RegisterTokens = (userId, bearerToken, refreshToken) => {
         const bearerValidity = new Date(Date.now() + opts.bearerToken.expiresIn);
         const refreshValidity = new Date(Date.now() + opts.refreshToken.expiresIn);
-        tokens.push({ bearerToken, refreshToken, userId, bearerValidity, refreshValidity });
+        sessions.push({
+            bearer: { token: bearerToken, validity: bearerValidity },
+            refresh: { token: refreshToken, validity: refreshValidity },
+            userId,
+        });
     };
 
     const generateCookieOpts: GenerateCookieOpts = () => ({
@@ -83,25 +111,48 @@ export default plugin((async (fastify, opts: JsonWebTokenPluginOpts, done) => {
         expires: new Date(Date.now() + opts.refreshToken.expiresIn),
     });
 
+    const verifyToken: VerifyToken = (token, opts, secret, type) => {
+        const decoded = verify(token, secret, opts) as DecodedToken;
+        const isRegistered = () => {
+            if (type === 'Bearer') return sessions.find(({ bearer }) => bearer.token === token) !== undefined;
+            if (type === 'Refresh') return sessions.find(({ refresh }) => refresh.token === token) !== undefined;
+        };
+        const isValid = () => decoded && typeof decoded === 'object';
+        const isExpired = () => decoded && decoded.exp * 1000 < Date.now();
+        const revoke = () => {
+            const index = (() => {
+                if (type === 'Bearer') return sessions.findIndex(({ bearer }) => bearer.token === token);
+                if (type === 'Refresh') return sessions.findIndex(({ refresh }) => refresh.token === token);
+            })();
+            if (index === -1) return;
+            sessions.splice(index, 1);
+        };
+        return {
+            content: decoded,
+            string: token,
+            isRegistered,
+            isValid,
+            isExpired,
+            revoke,
+        };
+    };
+
     const signToken: SignToken = (payload, opts, secret) => sign(payload, secret, opts);
 
-    const verifyToken: VerifyToken = (token, verifyOpts, secret) => verify(token, secret, verifyOpts) as DecodedToken;
-
     const getBearerTokenFromRequest: GetBearerTokenFromRequest = request =>
-        (request.headers.authorization as string).split(' ')[1];
+        request.headers.authorization?.split(' ')?.[1];
 
     const getRefreshTokenFromRequest: GetRefreshTokenFromRequest = request =>
-        fastify.unsignCookie(request.cookies[opts.refreshToken.name]);
+        fastify.unsignCookie(request.cookies?.[opts.refreshToken.name] ?? '');
 
     fastify.decorate('jwt', {
-        getUserTokensByBearer,
-        getUserTokensByRefresh,
-        revokeUserTokensByBearer,
-        revokeUserTokensByRefresh,
-        setUserTokens,
+        revokeSession,
+        registerTokens,
         generateCookieOpts,
-        signToken,
-        verifyToken,
+        signBearerToken: token => signToken(token, signBearerOpts, bearerSecret),
+        signRefreshToken: token => signToken(token, signRefreshOpts, refreshSecret),
+        verifyBearerToken: token => verifyToken(token, verifyBearerOpts, bearerSecret, 'Bearer'),
+        verifyRefreshToken: token => verifyToken(token, verifyRefreshOpts, refreshSecret, 'Refresh'),
         getBearerTokenFromRequest,
         getRefreshTokenFromRequest,
     });
@@ -111,14 +162,13 @@ export default plugin((async (fastify, opts: JsonWebTokenPluginOpts, done) => {
 declare module 'fastify' {
     interface FastifyInstance {
         jwt: {
-            getUserTokensByBearer: GetUserTokens;
-            getUserTokensByRefresh: GetUserTokens;
-            revokeUserTokensByBearer: RevokeUserTokens;
-            revokeUserTokensByRefresh: RevokeUserTokens;
-            setUserTokens: SetUserTokens;
+            revokeSession: RevokeSession;
+            registerTokens: RegisterTokens;
             generateCookieOpts: GenerateCookieOpts;
-            signToken: SignToken;
-            verifyToken: VerifyToken;
+            signBearerToken: (token: TokenContent) => string;
+            signRefreshToken: (token: TokenContent) => string;
+            verifyBearerToken: (token: string) => VerifiedToken;
+            verifyRefreshToken: (token: string) => VerifiedToken;
             getBearerTokenFromRequest: GetBearerTokenFromRequest;
             getRefreshTokenFromRequest: GetRefreshTokenFromRequest;
         };

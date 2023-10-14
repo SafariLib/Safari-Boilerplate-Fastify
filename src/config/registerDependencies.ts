@@ -1,11 +1,12 @@
-import type { FastifyInstance } from 'fastify';
-import { serverConfig } from './serverConfig';
+import type { FastifyPluginCallback } from 'fastify';
+import plugin from 'fastify-plugin';
+import serverConfig from './serverConfig';
 
 /**
  * Register all external dependencies.
  * @config ./src/serverConfig.ts
  */
-export const registerDependencies = async (fastify: FastifyInstance) => {
+export default plugin((async (fastify, _, done) => {
     await fastify.register(import('@dependencies/prisma'), serverConfig.prisma);
     await fastify.register(import('@dependencies/bcrypt'), serverConfig.bcrypt);
     await fastify.register(import('@dependencies/fastifyRedis'), serverConfig.redis);
@@ -14,4 +15,5 @@ export const registerDependencies = async (fastify: FastifyInstance) => {
     await fastify.register(import('@dependencies/fastifySwagger'), serverConfig.swagger);
     await fastify.register(import('@dependencies/fastifySwaggerUI'), serverConfig.swaggerUI);
     await fastify.register(import('@dependencies/jsonwebtoken'), serverConfig.jsonwebtoken);
-};
+    done();
+}) as FastifyPluginCallback);

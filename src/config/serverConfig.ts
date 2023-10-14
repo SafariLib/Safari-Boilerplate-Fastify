@@ -6,8 +6,13 @@ import type { FastifySwaggerPluginOpts } from '@dependencies/fastifySwagger';
 import type { FastifySwaggerUIPluginOpts } from '@dependencies/fastifySwaggerUI';
 import type { JsonWebTokenPluginOpts } from '@dependencies/jsonwebtoken';
 import type { PrismaPluginOpts } from '@dependencies/prisma';
+import type { AuthorizationPluginOpts } from '@plugins/authorization';
 
-export const serverConfig: ServerConfig = {
+const serverConfig: ServerConfig = {
+    authorization: {
+        maxAttempts: 5,
+        min: 15,
+    },
     bcrypt: {
         saltRounds: 10,
     },
@@ -24,10 +29,12 @@ export const serverConfig: ServerConfig = {
         algorithm: 'HS256',
         bearerToken: {
             name: 'bearerToken',
+            secret: undefined,
             expiresIn: 1800000, // 30 minutes
         },
         refreshToken: {
             name: 'refreshToken',
+            secret: undefined,
             expiresIn: 86400000, // 24 hours
         },
     },
@@ -48,7 +55,7 @@ export const serverConfig: ServerConfig = {
             port: Number(process.env.REDIS_PORT),
             closeClient: true,
         },
-        namespaces: ['user_secret', 'user_token_id'],
+        namespaces: [],
     },
     swagger: {
         info: {
@@ -71,6 +78,7 @@ export const serverConfig: ServerConfig = {
 };
 
 interface ServerConfig {
+    authorization: AuthorizationPluginOpts;
     bcrypt: BcryptPluginOpts;
     cookie: FastifyCookiePluginOpts;
     jsonwebtoken: JsonWebTokenPluginOpts;
@@ -80,3 +88,5 @@ interface ServerConfig {
     swagger: FastifySwaggerPluginOpts;
     swaggerUI: FastifySwaggerUIPluginOpts;
 }
+
+export default serverConfig;

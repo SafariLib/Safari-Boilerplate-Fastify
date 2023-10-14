@@ -36,17 +36,14 @@
             }
         ],
         "paths": {
-            "@root/*": [
-                "./*"
+            "@config/*": [
+                "src/config/*"
             ],
             "@utils": [
                 "src/utils"
             ],
             "@schemas": [
                 "src/models/schemas"
-            ],
-            "@types": [
-                "src/models/types"
             ],
             "@controllers/*": [
                 "src/controllers/*"
@@ -59,9 +56,6 @@
             ],
             "@dependencies/*": [
                 "src/plugins/dependencies/*"
-            ],
-            "@services/*": [
-                "src/services/*"
             ]
         }
     },
